@@ -1,19 +1,25 @@
-import { app, BrowserWindow, screen } from "electron";
+import { app, BrowserWindow, ipcMain, screen } from "electron";
 import path from "node:path";
+import { loadConfig, saveConfig, getConfig } from "./config";
 
 let mainWindow: BrowserWindow | null = null;
 
 function createWindow(): void {
+  const config = loadConfig();
   const { width: screenWidth, height: screenHeight } =
     screen.getPrimaryDisplay().workAreaSize;
 
-  const defaultSize = 150;
+  const size = config.size;
+  const x =
+    config.position.x >= 0 ? config.position.x : screenWidth - size - 20;
+  const y =
+    config.position.y >= 0 ? config.position.y : screenHeight - size - 20;
 
   mainWindow = new BrowserWindow({
-    width: defaultSize,
-    height: defaultSize,
-    x: screenWidth - defaultSize - 20,
-    y: screenHeight - defaultSize - 20,
+    width: size,
+    height: size,
+    x,
+    y,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -42,6 +48,38 @@ app.dock?.hide();
 
 app.whenReady().then(() => {
   createWindow();
+
+  ipcMain.handle("get-config", () => {
+    return getConfig();
+  });
+
+  ipcMain.handle("set-position", (_event, pos: { x: number; y: number }) => {
+    const config = getConfig();
+    config.position = pos;
+    saveConfig(config);
+    mainWindow?.setPosition(pos.x, pos.y);
+  });
+
+  ipcMain.handle("set-size", (_event, data: { size: number }) => {
+    const win = mainWindow;
+    if (!win) return;
+    const config = getConfig();
+    const oldSize = config.size;
+    const newSize = Math.max(80, Math.min(200, data.size));
+    const [oldX, oldY] = win.getPosition();
+    const delta = (oldSize - newSize) / 2;
+    const newX = Math.round(oldX + delta);
+    const newY = Math.round(oldY + delta);
+    config.size = newSize;
+    config.position = { x: newX, y: newY };
+    saveConfig(config);
+    win.setSize(newSize, newSize);
+    win.setPosition(newX, newY);
+  });
+
+  ipcMain.handle("set-ignore-mouse-events", (_event, ignore: boolean) => {
+    mainWindow?.setIgnoreMouseEvents(ignore, { forward: true });
+  });
 });
 
 app.on("window-all-closed", () => {
