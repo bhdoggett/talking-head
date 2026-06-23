@@ -25,6 +25,12 @@
   display: block;
 }
 
+.canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 .error {
   font-size: 12px;
   text-align: center;

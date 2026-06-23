@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useCamera } from "./hooks/useCamera";
+import { useBlur } from "./hooks/useBlur";
 import { useDrag } from "./hooks/useDrag";
 import styles from "./App.module.css";
 
@@ -14,7 +15,12 @@ interface AppConfig {
 
 export function App() {
   const [config, setConfig] = useState<AppConfig | null>(null);
-  const { videoRef, error } = useCamera(config?.cameraDeviceId ?? null);
+  const { videoRef, error, streamRef } = useCamera(config?.cameraDeviceId ?? null);
+  const { canvasRef } = useBlur(
+    streamRef.current,
+    config?.backgroundBlur ?? false,
+    config?.mirrored ?? true,
+  );
   const { onMouseDown } = useDrag();
 
   useEffect(() => {
@@ -65,6 +71,8 @@ export function App() {
     >
       {error ? (
         <span className={styles.error}>{error}</span>
+      ) : config?.backgroundBlur ? (
+        <canvas ref={canvasRef} className={styles.canvas} />
       ) : (
         <video
           ref={videoRef}
