@@ -7,6 +7,7 @@ import {
 } from "electron";
 import path from "node:path";
 import { getConfig, saveConfig, TalkingHeadConfig } from "./config";
+import { resizeBubble } from "./main";
 
 let tray: Tray | null = null;
 
@@ -53,19 +54,19 @@ async function buildMenu(win: BrowserWindow): Promise<Menu> {
           label: "Small (200px)",
           type: "radio" as const,
           checked: config.size === 200,
-          click: () => resizeFromTray(win, 200),
+          click: () => resizeBubble(win, 200),
         },
         {
           label: "Medium (260px)",
           type: "radio" as const,
           checked: config.size === 260,
-          click: () => resizeFromTray(win, 260),
+          click: () => resizeBubble(win, 260),
         },
         {
           label: "Large (320px)",
           type: "radio" as const,
           checked: config.size === 320,
-          click: () => resizeFromTray(win, 320),
+          click: () => resizeBubble(win, 320),
         },
       ],
     },
@@ -179,20 +180,6 @@ async function buildMenu(win: BrowserWindow): Promise<Menu> {
   ]);
 }
 
-function resizeFromTray(win: BrowserWindow, newSize: number) {
-  const config = getConfig();
-  const oldSize = config.size;
-  const [oldX, oldY] = win.getPosition();
-  const delta = (oldSize - newSize) / 2;
-  const newX = Math.round(oldX + delta);
-  const newY = Math.round(oldY + delta);
-  config.size = newSize;
-  config.position = { x: newX, y: newY };
-  saveConfig(config);
-  win.setSize(newSize, newSize);
-  win.setPosition(newX, newY);
-  sendConfigToRenderer(win, config);
-}
 
 function setBorder(
   win: BrowserWindow,
@@ -251,9 +238,3 @@ export function createTray(win: BrowserWindow): Tray {
   return tray;
 }
 
-export async function refreshTrayMenu(win: BrowserWindow): Promise<void> {
-  if (tray) {
-    const menu = await buildMenu(win);
-    tray.setContextMenu(menu);
-  }
-}

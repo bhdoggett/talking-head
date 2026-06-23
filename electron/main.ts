@@ -6,6 +6,22 @@ import { createTray } from "./tray";
 let mainWindow: BrowserWindow | null = null;
 let isHovered = false;
 
+export function resizeBubble(win: BrowserWindow, newSize: number): void {
+  const config = getConfig();
+  const oldSize = config.size;
+  const clamped = Math.max(80, Math.min(320, newSize));
+  const [oldX, oldY] = win.getPosition();
+  const delta = (oldSize - clamped) / 2;
+  const newX = Math.round(oldX + delta);
+  const newY = Math.round(oldY + delta);
+  config.size = clamped;
+  config.position = { x: newX, y: newY };
+  saveConfig(config);
+  win.setSize(clamped, clamped + (isHovered ? 44 : 0));
+  win.setPosition(newX, newY);
+  win.webContents.send("config-changed", config);
+}
+
 function createWindow(): void {
   const config = loadConfig();
   const { width: screenWidth, height: screenHeight } =
@@ -71,21 +87,7 @@ app.whenReady().then(() => {
   );
 
   ipcMain.handle("set-size", (_event, data: { size: number }) => {
-    const win = mainWindow;
-    if (!win) return;
-    const config = getConfig();
-    const oldSize = config.size;
-    const newSize = Math.max(80, Math.min(320, data.size));
-    const [oldX, oldY] = win.getPosition();
-    const delta = (oldSize - newSize) / 2;
-    const newX = Math.round(oldX + delta);
-    const newY = Math.round(oldY + delta);
-    config.size = newSize;
-    config.position = { x: newX, y: newY };
-    saveConfig(config);
-    win.setSize(newSize, newSize + (isHovered ? 44 : 0));
-    win.setPosition(newX, newY);
-    mainWindow?.webContents.send("config-changed", config);
+    if (mainWindow) resizeBubble(mainWindow, data.size);
   });
 
   ipcMain.handle("set-ignore-mouse-events", (_event, ignore: boolean) => {
