@@ -27,17 +27,20 @@ export function useCamera(initialDeviceId: string | null) {
   const videoElRef = useRef<HTMLVideoElement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-
-  const attachStream = () => {
-    if (videoElRef.current && streamRef.current) {
-      videoElRef.current.srcObject = streamRef.current;
-    }
-  };
+  const [streamReady, setStreamReady] = useState(0);
 
   const videoRef = useCallback((el: HTMLVideoElement | null) => {
     videoElRef.current = el;
-    attachStream();
+    if (el && streamRef.current) {
+      el.srcObject = streamRef.current;
+    }
   }, []);
+
+  useEffect(() => {
+    if (videoElRef.current && streamRef.current) {
+      videoElRef.current.srcObject = streamRef.current;
+    }
+  }, [streamReady]);
 
   const startCamera = async (deviceId: string | null) => {
     if (streamRef.current) {
@@ -50,7 +53,7 @@ export function useCamera(initialDeviceId: string | null) {
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
-      attachStream();
+      setStreamReady((n) => n + 1);
       setError(null);
     } catch (err) {
       setError("Camera unavailable");
