@@ -5,3 +5,4 @@ dist-electron/
 out/
 release/
 *.log
+docs/
