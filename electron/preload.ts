@@ -6,6 +6,10 @@ export const electronAPI = {
   setSize: (size: number) => ipcRenderer.invoke("set-size", { size }),
   setIgnoreMouseEvents: (ignore: boolean) =>
     ipcRenderer.invoke("set-ignore-mouse-events", ignore),
+  setHover: (hovered: boolean) =>
+    ipcRenderer.invoke("set-hover", hovered),
+  setBackgroundBlur: (enabled: boolean) =>
+    ipcRenderer.invoke("set-background-blur", enabled),
   getConfig: () => ipcRenderer.invoke("get-config"),
   setBorderColor: (color: string) =>
     ipcRenderer.invoke("set-border-color", color),

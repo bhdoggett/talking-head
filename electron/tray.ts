@@ -164,6 +164,17 @@ async function buildMenu(win: BrowserWindow): Promise<Menu> {
         sendConfigToRenderer(win, c);
       },
     },
+    {
+      label: "Background Blur",
+      type: "checkbox",
+      checked: config.backgroundBlur,
+      click: (menuItem) => {
+        const c = getConfig();
+        c.backgroundBlur = menuItem.checked;
+        saveConfig(c);
+        sendConfigToRenderer(win, c);
+      },
+    },
     { type: "separator" },
     {
       label: "Quit",

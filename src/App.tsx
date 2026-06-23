@@ -9,6 +9,7 @@ interface AppConfig {
   cameraDeviceId: string | null;
   border: { width: number; color: string; shadow: boolean };
   mirrored: boolean;
+  backgroundBlur: boolean;
 }
 
 export function App() {

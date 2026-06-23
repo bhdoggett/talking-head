@@ -6,12 +6,16 @@ declare global {
       setPosition: (x: number, y: number) => Promise<void>;
       setSize: (size: number) => Promise<void>;
       setIgnoreMouseEvents: (ignore: boolean) => Promise<void>;
+      setHover: (hovered: boolean) => Promise<void>;
+      setBackgroundBlur: (enabled: boolean) => Promise<void>;
+      setBorderColor: (color: string) => Promise<void>;
       getConfig: () => Promise<{
         position: { x: number; y: number };
         size: number;
         cameraDeviceId: string | null;
         border: { width: number; color: string; shadow: boolean };
         mirrored: boolean;
+        backgroundBlur: boolean;
       }>;
       onConfigChanged: (callback: (config: unknown) => void) => () => void;
       onSetCamera: (callback: (deviceId: string) => void) => () => void;
@@ -60,5 +64,5 @@ export function useCamera(initialDeviceId: string | null) {
     };
   }, []);
 
-  return { videoRef, error };
+  return { videoRef, error, streamRef };
 }

@@ -8,6 +8,7 @@ export interface TalkingHeadConfig {
   cameraDeviceId: string | null;
   border: { width: number; color: string; shadow: boolean };
   mirrored: boolean;
+  backgroundBlur: boolean;
 }
 
 const CONFIG_DIR = path.join(os.homedir(), ".talking-head");
@@ -19,6 +20,7 @@ const DEFAULT_CONFIG: TalkingHeadConfig = {
   cameraDeviceId: null,
   border: { width: 2, color: "#ffffff", shadow: true },
   mirrored: true,
+  backgroundBlur: false,
 };
 
 let currentConfig: TalkingHeadConfig = { ...DEFAULT_CONFIG };

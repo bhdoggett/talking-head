@@ -99,6 +99,27 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.handle("set-hover", (_event, hovered: boolean) => {
+    const win = mainWindow;
+    if (!win) return;
+    const config = getConfig();
+    const size = config.size;
+    if (hovered) {
+      win.setSize(size, size + 44);
+    } else {
+      win.setSize(size, size);
+    }
+  });
+
+  ipcMain.handle("set-background-blur", (_event, enabled: boolean) => {
+    const config = getConfig();
+    config.backgroundBlur = enabled;
+    saveConfig(config);
+    if (mainWindow) {
+      mainWindow.webContents.send("config-changed", config);
+    }
+  });
+
   if (mainWindow) {
     createTray(mainWindow);
   }
