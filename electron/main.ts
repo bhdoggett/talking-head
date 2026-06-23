@@ -5,6 +5,7 @@ import { createTray } from "./tray";
 
 let mainWindow: BrowserWindow | null = null;
 let isHovered = false;
+const SHADOW_PAD = 20;
 
 export function resizeBubble(win: BrowserWindow, newSize: number): void {
   const config = getConfig();
@@ -17,7 +18,7 @@ export function resizeBubble(win: BrowserWindow, newSize: number): void {
   config.size = clamped;
   config.position = { x: newX, y: newY };
   saveConfig(config);
-  win.setSize(clamped, clamped + (isHovered ? 44 : 0));
+  win.setSize(clamped + SHADOW_PAD, clamped + SHADOW_PAD + (isHovered ? 44 : 0));
   win.setPosition(newX, newY);
   win.webContents.send("config-changed", config);
 }
@@ -34,8 +35,8 @@ function createWindow(): void {
     config.position.y >= 0 ? config.position.y : screenHeight - size - 20;
 
   mainWindow = new BrowserWindow({
-    width: size,
-    height: size,
+    width: size + SHADOW_PAD,
+    height: size + SHADOW_PAD,
     x,
     y,
     frame: false,
@@ -109,7 +110,7 @@ app.whenReady().then(() => {
     isHovered = hovered;
     const config = getConfig();
     const size = config.size;
-    win.setSize(size, size + (hovered ? 44 : 0));
+    win.setSize(size + SHADOW_PAD, size + SHADOW_PAD + (hovered ? 44 : 0));
   });
 
   ipcMain.handle(

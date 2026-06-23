@@ -86,12 +86,12 @@ export function App() {
   return (
     <div
       className={styles.container}
-      onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       <div
         className={styles.bubble}
         style={borderStyle as React.CSSProperties}
+        onMouseEnter={handleMouseEnter}
         onMouseDown={onMouseDown}
         onWheel={handleWheel}
       >

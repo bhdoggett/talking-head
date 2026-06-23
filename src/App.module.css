@@ -2,6 +2,8 @@
   width: 100%;
   height: 100%;
   position: relative;
+  padding: 10px;
+  box-sizing: border-box;
 }
 
 .bubble {
@@ -11,7 +13,7 @@
   overflow: hidden;
   position: relative;
   border: var(--border-width) solid var(--border-color);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, calc(0.6 * var(--shadow-enabled)));
+  box-shadow: -2px 3px 8px rgba(0, 0, 0, calc(0.3 * var(--shadow-enabled)));
   cursor: grab;
   background: #333;
   display: flex;
