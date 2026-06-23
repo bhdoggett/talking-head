@@ -1,0 +1,6 @@
+appId: com.talking-head.app
+productName: Talking Head
+directories:
+  output: release
+mac:
+  target: dmg
