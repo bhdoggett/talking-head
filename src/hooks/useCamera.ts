@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 
 declare global {
   interface Window {
@@ -24,9 +24,20 @@ declare global {
 }
 
 export function useCamera(initialDeviceId: string | null) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoElRef = useRef<HTMLVideoElement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  const attachStream = () => {
+    if (videoElRef.current && streamRef.current) {
+      videoElRef.current.srcObject = streamRef.current;
+    }
+  };
+
+  const videoRef = useCallback((el: HTMLVideoElement | null) => {
+    videoElRef.current = el;
+    attachStream();
+  }, []);
 
   const startCamera = async (deviceId: string | null) => {
     if (streamRef.current) {
@@ -39,9 +50,7 @@ export function useCamera(initialDeviceId: string | null) {
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
+      attachStream();
       setError(null);
     } catch (err) {
       setError("Camera unavailable");

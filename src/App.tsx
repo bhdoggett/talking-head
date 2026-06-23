@@ -46,20 +46,18 @@ export function App() {
   const handleMouseEnter = () => {
     setHovered(true);
     window.electronAPI.setIgnoreMouseEvents(false);
-    window.electronAPI.setHover(true);
   };
 
   const handleMouseLeave = () => {
     setHovered(false);
     window.electronAPI.setIgnoreMouseEvents(true);
-    window.electronAPI.setHover(false);
   };
 
   const handleWheel = useCallback(
     (e: React.WheelEvent) => {
       if (!config) return;
       const delta = e.deltaY > 0 ? -10 : 10;
-      const newSize = Math.max(80, Math.min(200, config.size + delta));
+      const newSize = Math.max(80, Math.min(320, config.size + delta));
       if (newSize !== config.size) {
         setConfig((prev) => (prev ? { ...prev, size: newSize } : prev));
         window.electronAPI.setSize(newSize);
@@ -99,19 +97,22 @@ export function App() {
       >
         {error ? (
           <span className={styles.error}>{error}</span>
-        ) : config.backgroundBlur ? (
-          <canvas ref={canvasRef} className={styles.canvas} />
         ) : (
-          <video
-            ref={videoRef}
-            className={styles.video}
-            autoPlay
-            playsInline
-            muted
-            style={{
-              transform: config.mirrored ? "scaleX(-1)" : "none",
-            }}
-          />
+          <>
+            <video
+              ref={videoRef}
+              className={styles.video}
+              autoPlay
+              playsInline
+              muted
+              style={{
+                transform: config.mirrored ? "scaleX(-1)" : "none",
+              }}
+            />
+            {config.backgroundBlur && (
+              <canvas ref={canvasRef} className={styles.canvasOverlay} />
+            )}
+          </>
         )}
       </div>
       <HoverMenu
@@ -120,6 +121,7 @@ export function App() {
         onToggleBlur={handleToggleBlur}
         onToggleMirror={handleToggleMirror}
         onSizeChange={handleSizeChange}
+        onUpdateConfig={(updates) => window.electronAPI.updateConfig(updates)}
       />
     </div>
   );

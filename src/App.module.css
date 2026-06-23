@@ -9,6 +9,7 @@
   aspect-ratio: 1;
   border-radius: 50%;
   overflow: hidden;
+  position: relative;
   border: var(--border-width) solid var(--border-color);
   box-shadow: 0 4px 12px rgba(0, 0, 0, calc(0.3 * var(--shadow-enabled)));
   cursor: grab;
@@ -31,7 +32,10 @@
   display: block;
 }
 
-.canvas {
+.canvasOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   display: block;

@@ -75,7 +75,7 @@ app.whenReady().then(() => {
     if (!win) return;
     const config = getConfig();
     const oldSize = config.size;
-    const newSize = Math.max(80, Math.min(200, data.size));
+    const newSize = Math.max(80, Math.min(320, data.size));
     const [oldX, oldY] = win.getPosition();
     const delta = (oldSize - newSize) / 2;
     const newX = Math.round(oldX + delta);
@@ -85,6 +85,7 @@ app.whenReady().then(() => {
     saveConfig(config);
     win.setSize(newSize, newSize + (isHovered ? 44 : 0));
     win.setPosition(newX, newY);
+    mainWindow?.webContents.send("config-changed", config);
   });
 
   ipcMain.handle("set-ignore-mouse-events", (_event, ignore: boolean) => {

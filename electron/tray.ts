@@ -50,28 +50,22 @@ async function buildMenu(win: BrowserWindow): Promise<Menu> {
       label: "Size",
       submenu: [
         {
-          label: "Small (80px)",
-          type: "radio" as const,
-          checked: config.size === 80,
-          click: () => resizeFromTray(win, 80),
-        },
-        {
-          label: "Medium (120px)",
-          type: "radio" as const,
-          checked: config.size === 120,
-          click: () => resizeFromTray(win, 120),
-        },
-        {
-          label: "Large (160px)",
-          type: "radio" as const,
-          checked: config.size === 160,
-          click: () => resizeFromTray(win, 160),
-        },
-        {
-          label: "Max (200px)",
+          label: "Small (200px)",
           type: "radio" as const,
           checked: config.size === 200,
           click: () => resizeFromTray(win, 200),
+        },
+        {
+          label: "Medium (260px)",
+          type: "radio" as const,
+          checked: config.size === 260,
+          click: () => resizeFromTray(win, 260),
+        },
+        {
+          label: "Large (320px)",
+          type: "radio" as const,
+          checked: config.size === 320,
+          click: () => resizeFromTray(win, 320),
         },
       ],
     },

@@ -48,28 +48,48 @@ export function useBlur(
     segmenter.setOptions({ modelSelection: 1, selfieMode: false });
     segmenterRef.current = segmenter;
 
-    const onResults = (results: Results) => {
-      const w = results.image.width;
-      const h = results.image.height;
-      canvas.width = w;
-      canvas.height = h;
+    const bgCanvas = document.createElement("canvas");
+    const bgCtx = bgCanvas.getContext("2d")!;
+    const fgCanvas = document.createElement("canvas");
+    const fgCtx = fgCanvas.getContext("2d")!;
 
+    const onResults = (results: Results) => {
+      const srcW = results.image.width;
+      const srcH = results.image.height;
+      const cropSize = Math.min(srcW, srcH);
+      const sx = (srcW - cropSize) / 2;
+      const sy = (srcH - cropSize) / 2;
+
+      canvas.width = cropSize;
+      canvas.height = cropSize;
+      bgCanvas.width = cropSize;
+      bgCanvas.height = cropSize;
+      fgCanvas.width = cropSize;
+      fgCanvas.height = cropSize;
+
+      // Background: image with person cut out, then blur won't spread person colors
+      bgCtx.clearRect(0, 0, cropSize, cropSize);
+      bgCtx.drawImage(results.image, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
+      bgCtx.globalCompositeOperation = "destination-out";
+      bgCtx.drawImage(results.segmentationMask, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
+
+      // Foreground: sharp person only
+      fgCtx.clearRect(0, 0, cropSize, cropSize);
+      fgCtx.drawImage(results.segmentationMask, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
+      fgCtx.globalCompositeOperation = "source-in";
+      fgCtx.drawImage(results.image, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
+
+      // Composite: blurred bg + sharp fg
       ctx.save();
       if (mirrored) {
-        ctx.translate(w, 0);
+        ctx.translate(cropSize, 0);
         ctx.scale(-1, 1);
       }
 
-      // Draw blurred background
       ctx.filter = "blur(10px)";
-      ctx.drawImage(results.image, 0, 0, w, h);
+      ctx.drawImage(bgCanvas, 0, 0);
       ctx.filter = "none";
-
-      // Clip to person mask and draw sharp foreground
-      ctx.globalCompositeOperation = "destination-out";
-      ctx.drawImage(results.segmentationMask, 0, 0, w, h);
-      ctx.globalCompositeOperation = "destination-over";
-      ctx.drawImage(results.image, 0, 0, w, h);
+      ctx.drawImage(fgCanvas, 0, 0);
 
       ctx.restore();
     };
