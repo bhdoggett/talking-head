@@ -4,6 +4,7 @@ import { loadConfig, saveConfig, getConfig } from "./config";
 import { createTray } from "./tray";
 
 let mainWindow: BrowserWindow | null = null;
+let isHovered = false;
 
 function createWindow(): void {
   const config = loadConfig();
@@ -82,7 +83,7 @@ app.whenReady().then(() => {
     config.size = newSize;
     config.position = { x: newX, y: newY };
     saveConfig(config);
-    win.setSize(newSize, newSize);
+    win.setSize(newSize, newSize + (isHovered ? 44 : 0));
     win.setPosition(newX, newY);
   });
 
@@ -102,22 +103,10 @@ app.whenReady().then(() => {
   ipcMain.handle("set-hover", (_event, hovered: boolean) => {
     const win = mainWindow;
     if (!win) return;
+    isHovered = hovered;
     const config = getConfig();
     const size = config.size;
-    if (hovered) {
-      win.setSize(size, size + 44);
-    } else {
-      win.setSize(size, size);
-    }
-  });
-
-  ipcMain.handle("set-background-blur", (_event, enabled: boolean) => {
-    const config = getConfig();
-    config.backgroundBlur = enabled;
-    saveConfig(config);
-    if (mainWindow) {
-      mainWindow.webContents.send("config-changed", config);
-    }
+    win.setSize(size, size + (hovered ? 44 : 0));
   });
 
   ipcMain.handle(

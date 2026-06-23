@@ -8,8 +8,6 @@ export const electronAPI = {
     ipcRenderer.invoke("set-ignore-mouse-events", ignore),
   setHover: (hovered: boolean) =>
     ipcRenderer.invoke("set-hover", hovered),
-  setBackgroundBlur: (enabled: boolean) =>
-    ipcRenderer.invoke("set-background-blur", enabled),
   getConfig: () => ipcRenderer.invoke("get-config"),
   updateConfig: (updates: Record<string, unknown>) =>
     ipcRenderer.invoke("update-config", updates),

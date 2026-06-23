@@ -7,7 +7,6 @@ declare global {
       setSize: (size: number) => Promise<void>;
       setIgnoreMouseEvents: (ignore: boolean) => Promise<void>;
       setHover: (hovered: boolean) => Promise<void>;
-      setBackgroundBlur: (enabled: boolean) => Promise<void>;
       setBorderColor: (color: string) => Promise<void>;
       updateConfig: (updates: Record<string, unknown>) => Promise<void>;
       getConfig: () => Promise<{
