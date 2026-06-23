@@ -11,3 +11,8 @@ mac:
   extendInfo:
     NSCameraUsageDescription: "Talking Head needs camera access to show your face in the overlay."
     NSMicrophoneUsageDescription: "Talking Head does not use the microphone."
+win:
+  icon: build/icon.png
+  target:
+    - nsis
+    - portable
