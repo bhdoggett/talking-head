@@ -170,6 +170,37 @@ async function buildMenu(win: BrowserWindow): Promise<Menu> {
         sendConfigToRenderer(win, c);
       },
     },
+    {
+      label: "Shape",
+      submenu: [
+        "circle", "rounded-square", "pill",
+        "star", "heart", "squiggle", "outline",
+      ].map((s) => ({
+        label: s.replace("-", " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        type: "radio" as const,
+        checked: config.shape === s,
+        click: () => {
+          const c = getConfig();
+          c.shape = s as typeof c.shape;
+          saveConfig(c);
+          sendConfigToRenderer(win, c);
+        },
+      })),
+    },
+    {
+      label: "Opacity",
+      submenu: [1.0, 0.8, 0.6, 0.4].map((v) => ({
+        label: `${Math.round(v * 100)}%`,
+        type: "radio" as const,
+        checked: config.opacity === v,
+        click: () => {
+          const c = getConfig();
+          c.opacity = v;
+          saveConfig(c);
+          sendConfigToRenderer(win, c);
+        },
+      })),
+    },
     { type: "separator" },
     {
       label: "Quit",

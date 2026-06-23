@@ -3,6 +3,11 @@ import { getConfig, saveConfig } from "./config";
 
 let isHovered = false;
 export const SHADOW_PAD = 20;
+let onConfigBroadcast: (() => void) | null = null;
+
+export function setConfigBroadcast(fn: () => void): void {
+  onConfigBroadcast = fn;
+}
 
 export function setHovered(value: boolean): void {
   isHovered = value;
@@ -25,5 +30,5 @@ export function resizeBubble(win: BrowserWindow, newSize: number): void {
   saveConfig(config);
   win.setSize(clamped + SHADOW_PAD, clamped + SHADOW_PAD + (isHovered ? 44 : 0));
   win.setPosition(newX, newY);
-  win.webContents.send("config-changed", config);
+  onConfigBroadcast?.();
 }

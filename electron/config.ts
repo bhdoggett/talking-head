@@ -2,6 +2,16 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 
+export type BubbleShape =
+  | "circle"
+  | "rounded-square"
+  | "pill"
+  | "rectangle"
+  | "star"
+  | "heart"
+  | "squiggle"
+  | "outline";
+
 export interface TalkingHeadConfig {
   position: { x: number; y: number };
   size: number;
@@ -9,6 +19,8 @@ export interface TalkingHeadConfig {
   border: { width: number; color: string; shadow: boolean };
   mirrored: boolean;
   backgroundBlur: boolean;
+  opacity: number;
+  shape: BubbleShape;
 }
 
 const CONFIG_DIR = path.join(os.homedir(), ".talking-head");
@@ -21,6 +33,8 @@ const DEFAULT_CONFIG: TalkingHeadConfig = {
   border: { width: 2, color: "#ffffff", shadow: true },
   mirrored: true,
   backgroundBlur: false,
+  opacity: 1.0,
+  shape: "circle",
 };
 
 let currentConfig: TalkingHeadConfig = { ...DEFAULT_CONFIG };

@@ -8,6 +8,8 @@ declare global {
       setIgnoreMouseEvents: (ignore: boolean) => Promise<void>;
       setHover: (hovered: boolean) => Promise<void>;
       setBorderColor: (color: string) => Promise<void>;
+      toggleMenu: () => Promise<void>;
+      resizeMenu: (width: number, height: number) => Promise<void>;
       updateConfig: (updates: Record<string, unknown>) => Promise<void>;
       getConfig: () => Promise<{
         position: { x: number; y: number };
@@ -16,6 +18,8 @@ declare global {
         border: { width: number; color: string; shadow: boolean };
         mirrored: boolean;
         backgroundBlur: boolean;
+        opacity: number;
+        shape: string;
       }>;
       onConfigChanged: (callback: (config: unknown) => void) => () => void;
       onSetCamera: (callback: (deviceId: string) => void) => () => void;

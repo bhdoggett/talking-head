@@ -5,6 +5,7 @@ export function useBlur(
   stream: MediaStream | null,
   enabled: boolean,
   mirrored: boolean,
+  outlineOnly: boolean = false,
 ) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const segmenterRef = useRef<SelfieSegmentation | null>(null);
@@ -79,17 +80,21 @@ export function useBlur(
       fgCtx.globalCompositeOperation = "source-in";
       fgCtx.drawImage(results.image, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
 
-      // Composite: blurred bg + sharp fg
       ctx.save();
       if (mirrored) {
         ctx.translate(cropSize, 0);
         ctx.scale(-1, 1);
       }
 
-      ctx.filter = "blur(10px)";
-      ctx.drawImage(bgCanvas, 0, 0);
-      ctx.filter = "none";
-      ctx.drawImage(fgCanvas, 0, 0);
+      if (outlineOnly) {
+        ctx.clearRect(0, 0, cropSize, cropSize);
+        ctx.drawImage(fgCanvas, 0, 0);
+      } else {
+        ctx.filter = "blur(10px)";
+        ctx.drawImage(bgCanvas, 0, 0);
+        ctx.filter = "none";
+        ctx.drawImage(fgCanvas, 0, 0);
+      }
 
       ctx.restore();
     };
@@ -126,7 +131,7 @@ export function useBlur(
       video.srcObject = null;
       videoElRef.current = null;
     };
-  }, [enabled, stream, mirrored]);
+  }, [enabled, stream, mirrored, outlineOnly]);
 
   return { canvasRef };
 }

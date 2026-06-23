@@ -1,10 +1,79 @@
-import { app, BrowserWindow, ipcMain, screen } from "electron";
+import { app, BrowserWindow, globalShortcut, ipcMain, screen } from "electron";
 import path from "node:path";
 import { loadConfig, saveConfig, getConfig } from "./config";
 import { createTray } from "./tray";
-import { resizeBubble, setHovered, getHovered, SHADOW_PAD } from "./window";
+import { resizeBubble, setHovered, getHovered, SHADOW_PAD, setConfigBroadcast } from "./window";
 
 let mainWindow: BrowserWindow | null = null;
+let menuWindow: BrowserWindow | null = null;
+
+function broadcastConfig(): void {
+  const config = getConfig();
+  mainWindow?.webContents.send("config-changed", config);
+  if (menuWindow && !menuWindow.isDestroyed()) {
+    menuWindow.webContents.send("config-changed", config);
+  }
+}
+
+function toggleMenuWindow(): void {
+  if (menuWindow && !menuWindow.isDestroyed()) {
+    menuWindow.close();
+    menuWindow = null;
+    return;
+  }
+  if (!mainWindow) return;
+
+  const [bx, by] = mainWindow.getPosition();
+  const [bw] = mainWindow.getSize();
+
+  menuWindow = new BrowserWindow({
+    width: 290,
+    height: 500,
+    x: bx + bw - 2,
+    y: by + 10,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    resizable: false,
+    hasShadow: false,
+    skipTaskbar: true,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, "../preload/preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  menuWindow.setAlwaysOnTop(true, "floating");
+  menuWindow.setVisibleOnAllWorkspaces(true);
+
+  if (process.env.ELECTRON_RENDERER_URL) {
+    menuWindow.loadURL(`${process.env.ELECTRON_RENDERER_URL}#menu`);
+  } else {
+    menuWindow.loadFile(path.join(__dirname, "../../dist/index.html"), {
+      hash: "menu",
+    });
+  }
+
+  menuWindow.once("ready-to-show", () => {
+    menuWindow?.show();
+    menuWindow?.focus();
+    setTimeout(() => {
+      menuWindow?.on("blur", () => {
+        if (menuWindow && !menuWindow.isDestroyed()) {
+          menuWindow.close();
+          menuWindow = null;
+        }
+      });
+    }, 500);
+  });
+
+  menuWindow.on("closed", () => {
+    menuWindow = null;
+  });
+
+}
 
 function createWindow(): void {
   const config = loadConfig();
@@ -50,6 +119,26 @@ app.dock?.hide();
 
 app.whenReady().then(() => {
   createWindow();
+  setConfigBroadcast(broadcastConfig);
+
+  globalShortcut.register("CommandOrControl+Shift+H", () => {
+    if (!mainWindow) return;
+    if (mainWindow.isVisible()) {
+      mainWindow.hide();
+    } else {
+      mainWindow.show();
+    }
+  });
+
+  ipcMain.handle("toggle-menu", () => {
+    toggleMenuWindow();
+  });
+
+  ipcMain.handle("resize-menu", (_event, data: { width: number; height: number }) => {
+    if (menuWindow && !menuWindow.isDestroyed()) {
+      menuWindow.setSize(data.width, data.height);
+    }
+  });
 
   ipcMain.handle("get-config", () => {
     return getConfig();
@@ -82,9 +171,7 @@ app.whenReady().then(() => {
     const config = getConfig();
     config.border.color = color;
     saveConfig(config);
-    if (mainWindow) {
-      mainWindow.webContents.send("config-changed", config);
-    }
+    broadcastConfig();
   });
 
   ipcMain.handle("set-hover", (_event, hovered: boolean) => {

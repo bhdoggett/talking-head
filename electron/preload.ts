@@ -13,6 +13,9 @@ export const electronAPI = {
     ipcRenderer.invoke("update-config", updates),
   setBorderColor: (color: string) =>
     ipcRenderer.invoke("set-border-color", color),
+  toggleMenu: () => ipcRenderer.invoke("toggle-menu"),
+  resizeMenu: (width: number, height: number) =>
+    ipcRenderer.invoke("resize-menu", { width, height }),
   onConfigChanged: (callback: (config: unknown) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, config: unknown) =>
       callback(config);

@@ -6,16 +6,26 @@
   box-sizing: border-box;
 }
 
+.bubbleWrapper {
+  position: relative;
+}
+
+.borderBacking {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  aspect-ratio: 1;
+  z-index: 0;
+}
+
 .bubble {
   width: 100%;
   aspect-ratio: 1;
-  border-radius: 50%;
   overflow: hidden;
   position: relative;
+  z-index: 1;
   border: none;
-  box-shadow:
-    0 0 0 var(--border-width) var(--border-color),
-    -2px 3px 8px rgba(0, 0, 0, calc(0.3 * var(--shadow-enabled)));
   cursor: grab;
   background: #333;
   display: flex;
@@ -23,6 +33,11 @@
   justify-content: center;
   color: white;
   font-family: system-ui;
+}
+
+.outlineMode {
+  background: transparent;
+  overflow: visible;
 }
 
 .bubble:active {

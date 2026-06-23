@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useCamera } from "./hooks/useCamera";
 import { useBlur } from "./hooks/useBlur";
 import { useDrag } from "./hooks/useDrag";
 import { HoverMenu } from "./HoverMenu";
 import styles from "./App.module.css";
+import { SHAPE_CLIPS, SVG_CLIP_DEFS } from "./shapes";
 
 interface AppConfig {
   position: { x: number; y: number };
@@ -12,19 +13,23 @@ interface AppConfig {
   border: { width: number; color: string; shadow: boolean };
   mirrored: boolean;
   backgroundBlur: boolean;
+  opacity: number;
+  shape: string;
 }
 
 export function App() {
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [hovered, setHovered] = useState(false);
-  const hoverLockRef = useRef(false);
   const { videoRef, error, streamRef } = useCamera(
     config?.cameraDeviceId ?? null,
   );
+
+  const isOutline = config?.shape === "outline";
   const { canvasRef } = useBlur(
     streamRef.current,
-    config?.backgroundBlur ?? false,
+    config?.backgroundBlur || isOutline ? true : false,
     config?.mirrored ?? true,
+    isOutline,
   );
   const { onMouseDown } = useDrag();
 
@@ -36,13 +41,29 @@ export function App() {
     return unsubscribe;
   }, []);
 
-  const borderStyle = config
-    ? {
-        "--border-width": `${config.border.width}px`,
-        "--border-color": config.border.color,
-        "--shadow-enabled": config.border.shadow ? "1" : "0",
-      }
-    : {};
+  const clipPath = config ? SHAPE_CLIPS[config.shape] : undefined;
+  const isSimpleShape = !config || ["circle", "rounded-square"].includes(config.shape);
+
+  const bubbleBoxShadow = (() => {
+    if (!config || isOutline) return undefined;
+    if (!isSimpleShape) return undefined;
+    const shadows: string[] = [];
+    if (config.border.width > 0) {
+      shadows.push(`0 0 0 ${config.border.width}px ${config.border.color}`);
+    }
+    if (config.border.shadow) {
+      shadows.push("-2px 3px 8px rgba(0,0,0,0.3)");
+    }
+    return shadows.length > 0 ? shadows.join(", ") : undefined;
+  })();
+
+  const wrapperFilter = (() => {
+    if (!config || isOutline || isSimpleShape) return undefined;
+    if (config.border.shadow) {
+      return "drop-shadow(-1px 2px 4px rgba(0,0,0,0.3))";
+    }
+    return undefined;
+  })();
 
   const handleMouseEnter = () => {
     setHovered(true);
@@ -50,7 +71,6 @@ export function App() {
   };
 
   const handleMouseLeave = () => {
-    if (hoverLockRef.current) return;
     setHovered(false);
     window.electronAPI.setIgnoreMouseEvents(true);
   };
@@ -68,64 +88,53 @@ export function App() {
     [config],
   );
 
-  const handleToggleBlur = useCallback(() => {
-    if (!config) return;
-    window.electronAPI.updateConfig({ backgroundBlur: !config.backgroundBlur });
-  }, [config]);
-
-  const handleToggleMirror = useCallback(() => {
-    if (!config) return;
-    window.electronAPI.updateConfig({ mirrored: !config.mirrored });
-  }, [config]);
-
-  const handleSizeChange = useCallback((size: number) => {
-    setConfig((prev) => (prev ? { ...prev, size } : prev));
-    window.electronAPI.setSize(size);
-  }, []);
-
   if (!config) return null;
 
   return (
     <div
       className={styles.container}
       onMouseLeave={handleMouseLeave}
+      style={{ opacity: config.opacity }}
     >
-      <div
-        className={styles.bubble}
-        style={borderStyle as React.CSSProperties}
-        onMouseEnter={handleMouseEnter}
-        onMouseDown={onMouseDown}
-        onWheel={handleWheel}
-      >
+      <div dangerouslySetInnerHTML={{ __html: SVG_CLIP_DEFS }} />
+      <div className={styles.bubbleWrapper} style={{ filter: wrapperFilter }}>
+        <div
+          className={`${styles.bubble} ${isOutline ? styles.outlineMode : ""}`}
+          style={{
+            clipPath: isSimpleShape || isOutline ? undefined : clipPath,
+            borderRadius: config.shape === "circle" ? "50%"
+              : config.shape === "rounded-square" ? "20%"
+              : undefined,
+            boxShadow: bubbleBoxShadow,
+          } as React.CSSProperties}
+          onMouseEnter={handleMouseEnter}
+          onMouseDown={onMouseDown}
+          onWheel={handleWheel}
+        >
         {error ? (
           <span className={styles.error}>{error}</span>
         ) : (
           <>
-            <video
-              ref={videoRef}
-              className={styles.video}
-              autoPlay
-              playsInline
-              muted
-              style={{
-                transform: config.mirrored ? "scaleX(-1)" : "none",
-              }}
-            />
-            {config.backgroundBlur && (
+            {!isOutline && (
+              <video
+                ref={videoRef}
+                className={styles.video}
+                autoPlay
+                playsInline
+                muted
+                style={{
+                  transform: config.mirrored ? "scaleX(-1)" : "none",
+                }}
+              />
+            )}
+            {(config.backgroundBlur || isOutline) && (
               <canvas ref={canvasRef} className={styles.canvasOverlay} />
             )}
           </>
         )}
+        <HoverMenu visible={hovered} />
       </div>
-      <HoverMenu
-        visible={hovered}
-        config={config}
-        onToggleBlur={handleToggleBlur}
-        onToggleMirror={handleToggleMirror}
-        onSizeChange={handleSizeChange}
-        onUpdateConfig={(updates) => window.electronAPI.updateConfig(updates)}
-        onHoverLock={(locked) => { hoverLockRef.current = locked; }}
-      />
+      </div>
     </div>
   );
 }
