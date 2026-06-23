@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, screen } from "electron";
 import path from "node:path";
 import { loadConfig, saveConfig, getConfig } from "./config";
+import { createTray } from "./tray";
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -88,6 +89,27 @@ app.whenReady().then(() => {
   ipcMain.handle("set-ignore-mouse-events", (_event, ignore: boolean) => {
     mainWindow?.setIgnoreMouseEvents(ignore, { forward: true });
   });
+
+  ipcMain.handle("set-border-color", (_event, color: string) => {
+    const config = getConfig();
+    config.border.color = color;
+    saveConfig(config);
+    if (mainWindow) {
+      mainWindow.webContents.send("config-changed", config);
+    }
+  });
+
+  ipcMain.handle("get-devices", async () => {
+    if (!mainWindow) return [];
+    const devices = await mainWindow.webContents.executeJavaScript(
+      `navigator.mediaDevices.enumerateDevices().then(ds => ds.filter(d => d.kind === "videoinput").map(d => ({ deviceId: d.deviceId, label: d.label || "Camera " + d.deviceId.slice(0, 4) })))`,
+    );
+    return devices;
+  });
+
+  if (mainWindow) {
+    createTray(mainWindow);
+  }
 });
 
 app.on("window-all-closed", () => {

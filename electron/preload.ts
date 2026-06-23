@@ -7,6 +7,8 @@ export const electronAPI = {
   setIgnoreMouseEvents: (ignore: boolean) =>
     ipcRenderer.invoke("set-ignore-mouse-events", ignore),
   getConfig: () => ipcRenderer.invoke("get-config"),
+  setBorderColor: (color: string) =>
+    ipcRenderer.invoke("set-border-color", color),
   onConfigChanged: (callback: (config: unknown) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, config: unknown) =>
       callback(config);
