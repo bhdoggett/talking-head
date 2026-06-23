@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useCamera } from "./hooks/useCamera";
 import { useDrag } from "./hooks/useDrag";
 import styles from "./App.module.css";
@@ -40,6 +40,19 @@ export function App() {
     window.electronAPI.setIgnoreMouseEvents(true);
   };
 
+  const handleWheel = useCallback(
+    (e: React.WheelEvent) => {
+      if (!config) return;
+      const delta = e.deltaY > 0 ? -10 : 10;
+      const newSize = Math.max(80, Math.min(200, config.size + delta));
+      if (newSize !== config.size) {
+        setConfig((prev) => (prev ? { ...prev, size: newSize } : prev));
+        window.electronAPI.setSize(newSize);
+      }
+    },
+    [config],
+  );
+
   return (
     <div
       className={styles.bubble}
@@ -47,6 +60,7 @@ export function App() {
       onMouseDown={onMouseDown}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onWheel={handleWheel}
     >
       {error ? (
         <span className={styles.error}>{error}</span>
