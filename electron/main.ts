@@ -120,6 +120,18 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.handle(
+    "update-config",
+    (_event, updates: Partial<import("./config").TalkingHeadConfig>) => {
+      const config = getConfig();
+      Object.assign(config, updates);
+      saveConfig(config);
+      if (mainWindow) {
+        mainWindow.webContents.send("config-changed", config);
+      }
+    },
+  );
+
   if (mainWindow) {
     createTray(mainWindow);
   }

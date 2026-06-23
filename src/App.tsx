@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useCamera } from "./hooks/useCamera";
 import { useBlur } from "./hooks/useBlur";
 import { useDrag } from "./hooks/useDrag";
+import { HoverMenu } from "./HoverMenu";
 import styles from "./App.module.css";
 
 interface AppConfig {
@@ -15,7 +16,10 @@ interface AppConfig {
 
 export function App() {
   const [config, setConfig] = useState<AppConfig | null>(null);
-  const { videoRef, error, streamRef } = useCamera(config?.cameraDeviceId ?? null);
+  const [hovered, setHovered] = useState(false);
+  const { videoRef, error, streamRef } = useCamera(
+    config?.cameraDeviceId ?? null,
+  );
   const { canvasRef } = useBlur(
     streamRef.current,
     config?.backgroundBlur ?? false,
@@ -40,11 +44,15 @@ export function App() {
     : {};
 
   const handleMouseEnter = () => {
+    setHovered(true);
     window.electronAPI.setIgnoreMouseEvents(false);
+    window.electronAPI.setHover(true);
   };
 
   const handleMouseLeave = () => {
+    setHovered(false);
     window.electronAPI.setIgnoreMouseEvents(true);
+    window.electronAPI.setHover(false);
   };
 
   const handleWheel = useCallback(
@@ -60,31 +68,59 @@ export function App() {
     [config],
   );
 
+  const handleToggleBlur = useCallback(() => {
+    if (!config) return;
+    window.electronAPI.updateConfig({ backgroundBlur: !config.backgroundBlur });
+  }, [config]);
+
+  const handleToggleMirror = useCallback(() => {
+    if (!config) return;
+    window.electronAPI.updateConfig({ mirrored: !config.mirrored });
+  }, [config]);
+
+  const handleSizeChange = useCallback((size: number) => {
+    setConfig((prev) => (prev ? { ...prev, size } : prev));
+    window.electronAPI.setSize(size);
+  }, []);
+
+  if (!config) return null;
+
   return (
     <div
-      className={styles.bubble}
-      style={borderStyle as React.CSSProperties}
-      onMouseDown={onMouseDown}
+      className={styles.container}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onWheel={handleWheel}
     >
-      {error ? (
-        <span className={styles.error}>{error}</span>
-      ) : config?.backgroundBlur ? (
-        <canvas ref={canvasRef} className={styles.canvas} />
-      ) : (
-        <video
-          ref={videoRef}
-          className={styles.video}
-          autoPlay
-          playsInline
-          muted
-          style={{
-            transform: config?.mirrored ? "scaleX(-1)" : "none",
-          }}
-        />
-      )}
+      <div
+        className={styles.bubble}
+        style={borderStyle as React.CSSProperties}
+        onMouseDown={onMouseDown}
+        onWheel={handleWheel}
+      >
+        {error ? (
+          <span className={styles.error}>{error}</span>
+        ) : config.backgroundBlur ? (
+          <canvas ref={canvasRef} className={styles.canvas} />
+        ) : (
+          <video
+            ref={videoRef}
+            className={styles.video}
+            autoPlay
+            playsInline
+            muted
+            style={{
+              transform: config.mirrored ? "scaleX(-1)" : "none",
+            }}
+          />
+        )}
+      </div>
+      <HoverMenu
+        visible={hovered}
+        config={config}
+        onToggleBlur={handleToggleBlur}
+        onToggleMirror={handleToggleMirror}
+        onSizeChange={handleSizeChange}
+      />
     </div>
   );
 }

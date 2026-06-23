@@ -11,6 +11,8 @@ export const electronAPI = {
   setBackgroundBlur: (enabled: boolean) =>
     ipcRenderer.invoke("set-background-blur", enabled),
   getConfig: () => ipcRenderer.invoke("get-config"),
+  updateConfig: (updates: Record<string, unknown>) =>
+    ipcRenderer.invoke("update-config", updates),
   setBorderColor: (color: string) =>
     ipcRenderer.invoke("set-border-color", color),
   onConfigChanged: (callback: (config: unknown) => void) => {

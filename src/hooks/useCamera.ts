@@ -9,6 +9,7 @@ declare global {
       setHover: (hovered: boolean) => Promise<void>;
       setBackgroundBlur: (enabled: boolean) => Promise<void>;
       setBorderColor: (color: string) => Promise<void>;
+      updateConfig: (updates: Record<string, unknown>) => Promise<void>;
       getConfig: () => Promise<{
         position: { x: number; y: number };
         size: number;
