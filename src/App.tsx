@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useCamera } from "./hooks/useCamera";
 import { useBlur } from "./hooks/useBlur";
 import { useDrag } from "./hooks/useDrag";
@@ -17,6 +17,7 @@ interface AppConfig {
 export function App() {
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [hovered, setHovered] = useState(false);
+  const hoverLockRef = useRef(false);
   const { videoRef, error, streamRef } = useCamera(
     config?.cameraDeviceId ?? null,
   );
@@ -49,6 +50,7 @@ export function App() {
   };
 
   const handleMouseLeave = () => {
+    if (hoverLockRef.current) return;
     setHovered(false);
     window.electronAPI.setIgnoreMouseEvents(true);
   };
@@ -122,6 +124,7 @@ export function App() {
         onToggleMirror={handleToggleMirror}
         onSizeChange={handleSizeChange}
         onUpdateConfig={(updates) => window.electronAPI.updateConfig(updates)}
+        onHoverLock={(locked) => { hoverLockRef.current = locked; }}
       />
     </div>
   );

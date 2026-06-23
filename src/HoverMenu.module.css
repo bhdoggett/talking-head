@@ -44,6 +44,8 @@
   display: flex;
   flex-direction: column;
   min-width: 100px;
+  max-height: 200px;
+  overflow-y: auto;
   padding: 4px 0;
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.8);
@@ -75,9 +77,17 @@
 }
 
 .separator {
-  height: 1px;
-  margin: 3px 8px;
-  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  margin: 6px 10px;
+}
+
+.hiddenInput {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .swatch {
