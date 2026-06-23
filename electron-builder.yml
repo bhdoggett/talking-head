@@ -3,4 +3,5 @@ productName: Talking Head
 directories:
   output: release
 mac:
+  category: public.app-category.utilities
   target: dmg

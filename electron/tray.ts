@@ -26,20 +26,25 @@ async function buildMenu(win: BrowserWindow): Promise<Menu> {
     devices = [];
   }
 
+  const cameraSubmenu =
+    devices.length > 0
+      ? devices.map((d) => ({
+          label: d.label,
+          type: "radio" as const,
+          checked: config.cameraDeviceId === d.deviceId,
+          click: () => {
+            const c = getConfig();
+            c.cameraDeviceId = d.deviceId;
+            saveConfig(c);
+            win.webContents.send("set-camera", { deviceId: d.deviceId });
+          },
+        }))
+      : [{ label: "No cameras found", enabled: false }];
+
   return Menu.buildFromTemplate([
     {
       label: "Camera",
-      submenu: devices.map((d) => ({
-        label: d.label,
-        type: "radio" as const,
-        checked: config.cameraDeviceId === d.deviceId,
-        click: () => {
-          const c = getConfig();
-          c.cameraDeviceId = d.deviceId;
-          saveConfig(c);
-          win.webContents.send("set-camera", { deviceId: d.deviceId });
-        },
-      })),
+      submenu: cameraSubmenu,
     },
     {
       label: "Size",
@@ -205,7 +210,7 @@ function openColorPicker(win: BrowserWindow) {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "../preload/preload.js"),
     },
   });
 

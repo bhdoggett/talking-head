@@ -99,14 +99,6 @@ app.whenReady().then(() => {
     }
   });
 
-  ipcMain.handle("get-devices", async () => {
-    if (!mainWindow) return [];
-    const devices = await mainWindow.webContents.executeJavaScript(
-      `navigator.mediaDevices.enumerateDevices().then(ds => ds.filter(d => d.kind === "videoinput").map(d => ({ deviceId: d.deviceId, label: d.label || "Camera " + d.deviceId.slice(0, 4) })))`,
-    );
-    return devices;
-  });
-
   if (mainWindow) {
     createTray(mainWindow);
   }
