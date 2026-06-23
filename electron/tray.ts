@@ -7,7 +7,7 @@ import {
 } from "electron";
 import path from "node:path";
 import { getConfig, saveConfig, TalkingHeadConfig } from "./config";
-import { resizeBubble } from "./main";
+import { resizeBubble } from "./window";
 
 let tray: Tray | null = null;
 

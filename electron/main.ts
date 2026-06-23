@@ -2,26 +2,9 @@ import { app, BrowserWindow, ipcMain, screen } from "electron";
 import path from "node:path";
 import { loadConfig, saveConfig, getConfig } from "./config";
 import { createTray } from "./tray";
+import { resizeBubble, setHovered, getHovered, SHADOW_PAD } from "./window";
 
 let mainWindow: BrowserWindow | null = null;
-let isHovered = false;
-const SHADOW_PAD = 20;
-
-export function resizeBubble(win: BrowserWindow, newSize: number): void {
-  const config = getConfig();
-  const oldSize = config.size;
-  const clamped = Math.max(80, Math.min(320, newSize));
-  const [oldX, oldY] = win.getPosition();
-  const delta = (oldSize - clamped) / 2;
-  const newX = Math.round(oldX + delta);
-  const newY = Math.round(oldY + delta);
-  config.size = clamped;
-  config.position = { x: newX, y: newY };
-  saveConfig(config);
-  win.setSize(clamped + SHADOW_PAD, clamped + SHADOW_PAD + (isHovered ? 44 : 0));
-  win.setPosition(newX, newY);
-  win.webContents.send("config-changed", config);
-}
 
 function createWindow(): void {
   const config = loadConfig();
@@ -107,7 +90,7 @@ app.whenReady().then(() => {
   ipcMain.handle("set-hover", (_event, hovered: boolean) => {
     const win = mainWindow;
     if (!win) return;
-    isHovered = hovered;
+    setHovered(hovered);
     const config = getConfig();
     const size = config.size;
     win.setSize(size + SHADOW_PAD, size + SHADOW_PAD + (hovered ? 44 : 0));
@@ -133,7 +116,3 @@ app.whenReady().then(() => {
 app.on("window-all-closed", () => {
   app.quit();
 });
-
-export function getMainWindow(): BrowserWindow | null {
-  return mainWindow;
-}
