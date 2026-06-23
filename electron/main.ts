@@ -53,12 +53,20 @@ app.whenReady().then(() => {
     return getConfig();
   });
 
-  ipcMain.handle("set-position", (_event, pos: { x: number; y: number }) => {
-    const config = getConfig();
-    config.position = pos;
-    saveConfig(config);
-    mainWindow?.setPosition(pos.x, pos.y);
-  });
+  ipcMain.handle(
+    "set-position",
+    (_event, delta: { x: number; y: number }) => {
+      const win = mainWindow;
+      if (!win) return;
+      const [currentX, currentY] = win.getPosition();
+      const newX = currentX + delta.x;
+      const newY = currentY + delta.y;
+      win.setPosition(newX, newY);
+      const config = getConfig();
+      config.position = { x: newX, y: newY };
+      saveConfig(config);
+    },
+  );
 
   ipcMain.handle("set-size", (_event, data: { size: number }) => {
     const win = mainWindow;

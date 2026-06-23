@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useCamera } from "./hooks/useCamera";
+import { useDrag } from "./hooks/useDrag";
 import styles from "./App.module.css";
 
 interface AppConfig {
@@ -13,6 +14,7 @@ interface AppConfig {
 export function App() {
   const [config, setConfig] = useState<AppConfig | null>(null);
   const { videoRef, error } = useCamera(config?.cameraDeviceId ?? null);
+  const { onMouseDown } = useDrag();
 
   useEffect(() => {
     window.electronAPI.getConfig().then(setConfig);
@@ -42,6 +44,7 @@ export function App() {
     <div
       className={styles.bubble}
       style={borderStyle as React.CSSProperties}
+      onMouseDown={onMouseDown}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
