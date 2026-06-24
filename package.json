@@ -1,6 +1,6 @@
 {
   "name": "talking-head",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "out/main/main.js",
   "scripts": {
     "dev": "electron-vite dev",
