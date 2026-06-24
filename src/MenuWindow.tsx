@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import styles from "./MenuWindow.module.css";
-import { SHAPE_LABELS, SHAPE_LIST } from "./shapes";
+import { SHAPE_LABELS, SHAPE_LIST, SIMPLE_SHAPES } from "./shapes";
 
 interface AppConfig {
   backgroundBlur: boolean;
@@ -207,12 +207,22 @@ export function MenuWindow() {
         >
           Shape ›
         </button>
-        <button
-          className={`${styles.option} ${openSub === "border" ? styles.highlighted : ""}`}
-          onMouseEnter={() => setOpenSub("border")}
-        >
-          Border ›
-        </button>
+        {SIMPLE_SHAPES.has(config.shape) ? (
+          <button
+            className={`${styles.option} ${openSub === "border" ? styles.highlighted : ""}`}
+            onMouseEnter={() => setOpenSub("border")}
+          >
+            Border ›
+          </button>
+        ) : (
+          <button
+            className={`${styles.option} ${styles.disabled}`}
+            onMouseEnter={() => setOpenSub(null)}
+            title="No borders on special shapes"
+          >
+            Border
+          </button>
+        )}
         <button
           className={`${styles.option} ${openSub === "opacity" ? styles.highlighted : ""}`}
           onMouseEnter={() => setOpenSub("opacity")}

@@ -31,3 +31,5 @@ export const SHAPE_LABELS: Record<string, string> = {
 };
 
 export const SHAPE_LIST = Object.keys(SHAPE_LABELS);
+
+export const SIMPLE_SHAPES = new Set(["circle", "rounded-square"]);

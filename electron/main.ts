@@ -27,8 +27,8 @@ function toggleMenuWindow(): void {
   const [bw] = mainWindow.getSize();
 
   menuWindow = new BrowserWindow({
-    width: 290,
-    height: 500,
+    width: 330,
+    height: 600,
     x: bx + bw - 2,
     y: by + 10,
     frame: false,
@@ -189,9 +189,7 @@ app.whenReady().then(() => {
       const config = getConfig();
       Object.assign(config, updates);
       saveConfig(config);
-      if (mainWindow) {
-        mainWindow.webContents.send("config-changed", config);
-      }
+      broadcastConfig();
     },
   );
 

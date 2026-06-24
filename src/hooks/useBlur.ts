@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { SelfieSegmentation, Results } from "@mediapipe/selfie_segmentation";
+import { ImageSegmenter, FilesetResolver } from "@mediapipe/tasks-vision";
 
 export function useBlur(
   stream: MediaStream | null,
@@ -8,7 +8,7 @@ export function useBlur(
   outlineOnly: boolean = false,
 ) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const segmenterRef = useRef<SelfieSegmentation | null>(null);
+  const segmenterRef = useRef<ImageSegmenter | null>(null);
   const animFrameRef = useRef<number>(0);
   const videoElRef = useRef<HTMLVideoElement | null>(null);
 
@@ -42,21 +42,31 @@ export function useBlur(
     video.play();
     videoElRef.current = video;
 
-    const segmenter = new SelfieSegmentation({
-      locateFile: (file) =>
-        `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`,
-    });
-    segmenter.setOptions({ modelSelection: 1, selfieMode: false });
-    segmenterRef.current = segmenter;
-
     const bgCanvas = document.createElement("canvas");
     const bgCtx = bgCanvas.getContext("2d")!;
     const fgCanvas = document.createElement("canvas");
     const fgCtx = fgCanvas.getContext("2d")!;
 
-    const onResults = (results: Results) => {
-      const srcW = results.image.width;
-      const srcH = results.image.height;
+    let running = true;
+    let segmenter: ImageSegmenter | null = null;
+
+    const processFrame = () => {
+      if (!running || !segmenter || video.readyState < 2) {
+        if (running) {
+          animFrameRef.current = requestAnimationFrame(processFrame);
+        }
+        return;
+      }
+
+      const result = segmenter.segmentForVideo(video, performance.now());
+      const mask = result.confidenceMasks?.[0];
+      if (!mask) {
+        animFrameRef.current = requestAnimationFrame(processFrame);
+        return;
+      }
+
+      const srcW = video.videoWidth;
+      const srcH = video.videoHeight;
       const cropSize = Math.min(srcW, srcH);
       const sx = (srcW - cropSize) / 2;
       const sy = (srcH - cropSize) / 2;
@@ -68,17 +78,30 @@ export function useBlur(
       fgCanvas.width = cropSize;
       fgCanvas.height = cropSize;
 
-      // Background: image with person cut out, then blur won't spread person colors
-      bgCtx.clearRect(0, 0, cropSize, cropSize);
-      bgCtx.drawImage(results.image, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
-      bgCtx.globalCompositeOperation = "destination-out";
-      bgCtx.drawImage(results.segmentationMask, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
+      // Build mask as ImageData from the confidence mask
+      const maskData = mask.getAsFloat32Array();
+      const maskImageData = fgCtx.createImageData(srcW, srcH);
+      for (let i = 0; i < maskData.length; i++) {
+        const a = Math.round(maskData[i] * 255);
+        maskImageData.data[i * 4] = 255;
+        maskImageData.data[i * 4 + 1] = 255;
+        maskImageData.data[i * 4 + 2] = 255;
+        maskImageData.data[i * 4 + 3] = a;
+      }
 
-      // Foreground: sharp person only
+      // Draw mask to a temp canvas at full resolution, then crop
+      const maskCanvas = document.createElement("canvas");
+      maskCanvas.width = srcW;
+      maskCanvas.height = srcH;
+      const maskCtx = maskCanvas.getContext("2d")!;
+      maskCtx.putImageData(maskImageData, 0, 0);
+
+      // Foreground: mask + sharp image
       fgCtx.clearRect(0, 0, cropSize, cropSize);
-      fgCtx.drawImage(results.segmentationMask, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
+      fgCtx.drawImage(maskCanvas, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
       fgCtx.globalCompositeOperation = "source-in";
-      fgCtx.drawImage(results.image, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
+      fgCtx.drawImage(video, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
+      fgCtx.globalCompositeOperation = "source-over";
 
       ctx.save();
       if (mirrored) {
@@ -90,6 +113,13 @@ export function useBlur(
         ctx.clearRect(0, 0, cropSize, cropSize);
         ctx.drawImage(fgCanvas, 0, 0);
       } else {
+        // Background: image with person cut out
+        bgCtx.clearRect(0, 0, cropSize, cropSize);
+        bgCtx.drawImage(video, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
+        bgCtx.globalCompositeOperation = "destination-out";
+        bgCtx.drawImage(maskCanvas, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
+        bgCtx.globalCompositeOperation = "source-over";
+
         ctx.filter = "blur(10px)";
         ctx.drawImage(bgCanvas, 0, 0);
         ctx.filter = "none";
@@ -97,27 +127,35 @@ export function useBlur(
       }
 
       ctx.restore();
-    };
+      mask.close();
 
-    segmenter.onResults(onResults);
-
-    let running = true;
-    const processFrame = async () => {
-      if (!running || video.readyState < 2) {
-        if (running) {
-          animFrameRef.current = requestAnimationFrame(processFrame);
-        }
-        return;
-      }
-      await segmenter.send({ image: video });
       if (running) {
         animFrameRef.current = requestAnimationFrame(processFrame);
       }
     };
 
-    video.addEventListener("loadeddata", () => {
+    (async () => {
+      const vision = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm",
+      );
+      if (!running) return;
+      segmenter = await ImageSegmenter.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath:
+            "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite",
+          delegate: "GPU",
+        },
+        runningMode: "VIDEO",
+        outputConfidenceMasks: true,
+        outputCategoryMask: false,
+      });
+      if (!running) {
+        segmenter.close();
+        return;
+      }
+      segmenterRef.current = segmenter;
       processFrame();
-    });
+    })();
 
     return () => {
       running = false;
@@ -125,8 +163,10 @@ export function useBlur(
         cancelAnimationFrame(animFrameRef.current);
         animFrameRef.current = 0;
       }
-      segmenter.close();
-      segmenterRef.current = null;
+      if (segmenterRef.current) {
+        segmenterRef.current.close();
+        segmenterRef.current = null;
+      }
       video.pause();
       video.srcObject = null;
       videoElRef.current = null;
