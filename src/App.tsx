@@ -10,9 +10,9 @@ interface AppConfig {
   position: { x: number; y: number };
   size: number;
   cameraDeviceId: string | null;
-  border: { width: number; color: string; shadow: boolean };
+  border: { width: number; color: string; shadowAmount: number };
   mirrored: boolean;
-  backgroundBlur: boolean;
+  blurAmount: number;
   opacity: number;
   shape: string;
 }
@@ -27,7 +27,7 @@ export function App() {
   const isOutline = config?.shape === "outline";
   const { canvasRef } = useBlur(
     streamRef.current,
-    config?.backgroundBlur || isOutline ? true : false,
+    isOutline ? Math.max(config?.blurAmount ?? 0, 10) : (config?.blurAmount ?? 0),
     config?.mirrored ?? true,
     isOutline,
   );
@@ -51,16 +51,26 @@ export function App() {
     if (config.border.width > 0) {
       shadows.push(`0 0 0 ${config.border.width}px ${config.border.color}`);
     }
-    if (config.border.shadow) {
-      shadows.push("-2px 3px 8px rgba(0,0,0,0.3)");
+    if (config.border.shadowAmount > 0) {
+      const s = config.border.shadowAmount;
+      const blur = Math.min(s * 1.0, 10);
+      const oy = Math.min(s * 0.4, 4);
+      const ox = Math.min(s * 0.25, 2.5);
+      const alpha = Math.min(s * 0.09, 0.88);
+      shadows.push(`-${ox.toFixed(1)}px ${oy.toFixed(1)}px ${blur.toFixed(1)}px rgba(0,0,0,${alpha.toFixed(2)})`);
     }
     return shadows.length > 0 ? shadows.join(", ") : undefined;
   })();
 
   const wrapperFilter = (() => {
     if (!config || isOutline || isSimpleShape) return undefined;
-    if (config.border.shadow) {
-      return "drop-shadow(-1px 2px 4px rgba(0,0,0,0.3))";
+    if (config.border.shadowAmount > 0) {
+      const s = config.border.shadowAmount;
+      const blur = Math.min(s * 0.8, 8);
+      const oy = Math.min(s * 0.4, 4);
+      const ox = Math.min(s * 0.2, 2);
+      const alpha = Math.min(s * 0.09, 0.88);
+      return `drop-shadow(-${ox.toFixed(1)}px ${oy.toFixed(1)}px ${blur.toFixed(1)}px rgba(0,0,0,${alpha.toFixed(2)}))`;
     }
     return undefined;
   })();
@@ -127,13 +137,13 @@ export function App() {
                 }}
               />
             )}
-            {(config.backgroundBlur || isOutline) && (
+            {(config.blurAmount > 0 || isOutline) && (
               <canvas ref={canvasRef} className={styles.canvasOverlay} />
             )}
           </>
         )}
-        <HoverMenu visible={hovered} />
       </div>
+      <HoverMenu visible={hovered} />
       </div>
     </div>
   );

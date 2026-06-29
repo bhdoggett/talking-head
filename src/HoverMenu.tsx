@@ -12,7 +12,9 @@ export function HoverMenu({ visible }: HoverMenuProps) {
         onMouseDown={(e) => e.stopPropagation()}
         onClick={() => window.electronAPI.toggleMenu()}
       >
-        ···
+        <span className={styles.dot} />
+        <span className={styles.dot} />
+        <span className={styles.dot} />
       </button>
     </div>
   );

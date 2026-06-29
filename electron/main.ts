@@ -23,14 +23,24 @@ function toggleMenuWindow(): void {
   }
   if (!mainWindow) return;
 
+  const { width: screenW, height: screenH } = screen.getPrimaryDisplay().workAreaSize;
   const [bx, by] = mainWindow.getPosition();
-  const [bw] = mainWindow.getSize();
+  const [bw, bh] = mainWindow.getSize();
+
+  const menuW = 400;
+  const estimatedMenuH = 380;
+
+  // Right of bubble, clamped so the window never overflows the screen edge
+  const menuX = Math.min(bx + bw - 2, screenW - menuW);
+
+  // Align to bubble top; shift up if not enough space below
+  const menuY = Math.max(10, Math.min(by + 10, screenH - estimatedMenuH));
 
   menuWindow = new BrowserWindow({
-    width: 330,
-    height: 600,
-    x: bx + bw - 2,
-    y: by + 10,
+    width: menuW,
+    height: estimatedMenuH,
+    x: menuX,
+    y: menuY,
     frame: false,
     transparent: true,
     alwaysOnTop: true,

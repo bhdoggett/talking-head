@@ -1,8 +1,16 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.01);
+  z-index: 0;
+}
+
 .wrapper {
   display: flex;
-  gap: 0px;
+  gap: 0;
   align-items: flex-start;
   position: relative;
+  z-index: 1;
 }
 
 .subMenuWrapper {
@@ -20,7 +28,7 @@
   backdrop-filter: blur(20px);
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  width: 145px;
+  width: 175px;
   flex-shrink: 0;
   user-select: none;
 }
@@ -32,9 +40,10 @@
   font-family: system-ui;
   background: rgba(30, 30, 30, 0.95);
   backdrop-filter: blur(20px);
-  border-radius: 10px;
+  border-radius: 0 10px 10px 0;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  width: 145px;
+  border-left: none;
+  width: 160px;
   flex-shrink: 0;
   user-select: none;
 }
@@ -104,4 +113,104 @@
   height: 0;
   opacity: 0;
   pointer-events: none;
+}
+
+.sliderOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: default;
+}
+
+.sliderOption:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sliderOption.active {
+  color: #fff;
+}
+
+.optionLabel {
+  font-size: 13px;
+  font-family: system-ui;
+  white-space: nowrap;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.sliderReveal {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.sliderOption:hover .sliderReveal {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sliderOption:hover .check {
+  display: none;
+}
+
+.sliderReveal .slider {
+  flex: 1;
+}
+
+.sliderRow {
+  padding: 8px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sliderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  font-family: system-ui;
+}
+
+.sliderValue {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 11px;
+}
+
+.slider {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 3px;
+  background: transparent;
+  outline: none;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.8) var(--fill, 0%),
+    rgba(255, 255, 255, 0.15) var(--fill, 0%)
+  );
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 6px;
+  height: 16px;
+  margin-top: -8px;
+  border-radius: 3px;
+  background: #fff;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }

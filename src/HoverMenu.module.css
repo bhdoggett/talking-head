@@ -17,21 +17,40 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 16px;
+  gap: 4px;
+  width: 36px;
+  height: 20px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(12px);
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-  letter-spacing: 1px;
   cursor: pointer;
-  line-height: 1;
   padding: 0;
+  overflow: visible;
+  transition: background 0.2s ease;
 }
 
 .ellipsis:hover {
-  background: rgba(0, 0, 0, 0.8);
-  color: #fff;
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.75);
+  transition: transform 0.2s ease, background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.ellipsis:hover .dot {
+  background: #fff;
+}
+
+.ellipsis:hover .dot:first-child {
+  transform: translateX(-2px);
+}
+
+.ellipsis:hover .dot:last-child {
+  transform: translateX(2px);
 }

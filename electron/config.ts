@@ -16,9 +16,9 @@ export interface TalkingHeadConfig {
   position: { x: number; y: number };
   size: number;
   cameraDeviceId: string | null;
-  border: { width: number; color: string; shadow: boolean };
+  border: { width: number; color: string; shadowAmount: number };
   mirrored: boolean;
-  backgroundBlur: boolean;
+  blurAmount: number;
   opacity: number;
   shape: BubbleShape;
 }
@@ -30,9 +30,9 @@ const DEFAULT_CONFIG: TalkingHeadConfig = {
   position: { x: -1, y: -1 },
   size: 150,
   cameraDeviceId: null,
-  border: { width: 2, color: "#ffffff", shadow: true },
+  border: { width: 2, color: "#ffffff", shadowAmount: 5 },
   mirrored: true,
-  backgroundBlur: false,
+  blurAmount: 0,
   opacity: 1.0,
   shape: "circle",
 };
@@ -43,8 +43,17 @@ export function loadConfig(): TalkingHeadConfig {
   try {
     if (fs.existsSync(CONFIG_PATH)) {
       const raw = fs.readFileSync(CONFIG_PATH, "utf-8");
-      const parsed = JSON.parse(raw) as Partial<TalkingHeadConfig>;
-      currentConfig = { ...DEFAULT_CONFIG, ...parsed };
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      currentConfig = { ...DEFAULT_CONFIG, ...(parsed as Partial<TalkingHeadConfig>) };
+      // Migrate: backgroundBlur boolean → blurAmount number
+      if ("backgroundBlur" in parsed && !("blurAmount" in parsed)) {
+        currentConfig.blurAmount = parsed.backgroundBlur ? 10 : 0;
+      }
+      // Migrate: border.shadow boolean → border.shadowAmount number
+      const oldBorder = parsed.border as Record<string, unknown> | undefined;
+      if (oldBorder && "shadow" in oldBorder && !("shadowAmount" in oldBorder)) {
+        currentConfig.border = { ...currentConfig.border, shadowAmount: oldBorder.shadow ? 5 : 0 };
+      }
     }
   } catch {
     currentConfig = { ...DEFAULT_CONFIG };

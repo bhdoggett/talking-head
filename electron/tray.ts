@@ -135,14 +135,14 @@ async function buildMenu(win: BrowserWindow): Promise<Menu> {
             {
               label: "On",
               type: "radio" as const,
-              checked: config.border.shadow === true,
-              click: () => setBorder(win, { shadow: true }),
+              checked: config.border.shadowAmount > 0,
+              click: () => setBorder(win, { shadowAmount: 5 }),
             },
             {
               label: "Off",
               type: "radio" as const,
-              checked: config.border.shadow === false,
-              click: () => setBorder(win, { shadow: false }),
+              checked: config.border.shadowAmount === 0,
+              click: () => setBorder(win, { shadowAmount: 0 }),
             },
           ],
         },
@@ -162,10 +162,10 @@ async function buildMenu(win: BrowserWindow): Promise<Menu> {
     {
       label: "Background Blur",
       type: "checkbox",
-      checked: config.backgroundBlur,
+      checked: config.blurAmount > 0,
       click: (menuItem) => {
         const c = getConfig();
-        c.backgroundBlur = menuItem.checked;
+        c.blurAmount = menuItem.checked ? 10 : 0;
         saveConfig(c);
         sendConfigToRenderer(win, c);
       },

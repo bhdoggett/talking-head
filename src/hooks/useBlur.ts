@@ -3,10 +3,11 @@ import { ImageSegmenter, FilesetResolver } from "@mediapipe/tasks-vision";
 
 export function useBlur(
   stream: MediaStream | null,
-  enabled: boolean,
+  blurAmount: number,
   mirrored: boolean,
   outlineOnly: boolean = false,
 ) {
+  const enabled = blurAmount > 0 || outlineOnly;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const segmenterRef = useRef<ImageSegmenter | null>(null);
   const animFrameRef = useRef<number>(0);
@@ -120,7 +121,7 @@ export function useBlur(
         bgCtx.drawImage(maskCanvas, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
         bgCtx.globalCompositeOperation = "source-over";
 
-        ctx.filter = "blur(10px)";
+        ctx.filter = `blur(${blurAmount}px)`;
         ctx.drawImage(bgCanvas, 0, 0);
         ctx.filter = "none";
         ctx.drawImage(fgCanvas, 0, 0);
@@ -171,7 +172,7 @@ export function useBlur(
       video.srcObject = null;
       videoElRef.current = null;
     };
-  }, [enabled, stream, mirrored, outlineOnly]);
+  }, [enabled, blurAmount, stream, mirrored, outlineOnly]);
 
   return { canvasRef };
 }

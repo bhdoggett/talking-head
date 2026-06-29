@@ -15,9 +15,9 @@ declare global {
         position: { x: number; y: number };
         size: number;
         cameraDeviceId: string | null;
-        border: { width: number; color: string; shadow: boolean };
+        border: { width: number; color: string; shadowAmount: number };
         mirrored: boolean;
-        backgroundBlur: boolean;
+        blurAmount: number;
         opacity: number;
         shape: string;
       }>;

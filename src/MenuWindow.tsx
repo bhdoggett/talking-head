@@ -3,10 +3,10 @@ import styles from "./MenuWindow.module.css";
 import { SHAPE_LABELS, SHAPE_LIST, SIMPLE_SHAPES } from "./shapes";
 
 interface AppConfig {
-  backgroundBlur: boolean;
+  blurAmount: number;
   mirrored: boolean;
   size: number;
-  border: { width: number; color: string; shadow: boolean };
+  border: { width: number; color: string; shadowAmount: number };
   opacity: number;
   shape: string;
 }
@@ -37,11 +37,22 @@ export function MenuWindow() {
   const [customColor, setCustomColor] = useState<string | null>(null);
   const colorInputRef = useRef<HTMLInputElement | null>(null);
   const subRef = useRef<HTMLDivElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     document.documentElement.style.overflow = "visible";
     document.body.style.overflow = "visible";
     document.getElementById("root")!.style.overflow = "visible";
+  }, []);
+
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver(() => {
+      window.electronAPI.resizeMenu(400, el.offsetHeight);
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
   }, []);
 
   useEffect(() => {
@@ -52,10 +63,17 @@ export function MenuWindow() {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") window.close();
     };
+    const handleMouseDown = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        window.close();
+      }
+    };
     window.addEventListener("keydown", handleKey);
+    document.addEventListener("mousedown", handleMouseDown);
     return () => {
       unsubscribe();
       window.removeEventListener("keydown", handleKey);
+      document.removeEventListener("mousedown", handleMouseDown);
     };
   }, []);
 
@@ -96,19 +114,6 @@ export function MenuWindow() {
             {SHAPE_LABELS[key]} {config.shape === key ? "✓" : ""}
           </button>
         ));
-      case "opacity":
-        return [1.0, 0.8, 0.6, 0.4].map((v) => {
-          const match = Math.abs(config.opacity - v) < 0.01;
-          return (
-            <button
-              key={v}
-              className={`${styles.option} ${match ? styles.active : ""}`}
-              onClick={() => update({ opacity: v })}
-            >
-              {Math.round(v * 100)}% {match ? "✓" : ""}
-            </button>
-          );
-        });
       case "border":
         return (
           <>
@@ -170,78 +175,114 @@ export function MenuWindow() {
     }
   };
 
+  const hasSub = openSub && ["size", "shape", "border"].includes(openSub);
+
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.menu}>
-        <button
-          className={`${styles.option} ${config.backgroundBlur ? styles.active : ""}`}
-          onClick={() => update({ backgroundBlur: !config.backgroundBlur })}
-          onMouseEnter={() => setOpenSub(null)}
-        >
-          Blur {config.backgroundBlur ? "✓" : ""}
-        </button>
-        <button
-          className={`${styles.option} ${config.mirrored ? styles.active : ""}`}
-          onClick={() => update({ mirrored: !config.mirrored })}
-          onMouseEnter={() => setOpenSub(null)}
-        >
-          Mirror {config.mirrored ? "✓" : ""}
-        </button>
-        <button
-          className={`${styles.option} ${config.border.shadow ? styles.active : ""}`}
-          onClick={() => setBorder({ shadow: !config.border.shadow })}
-          onMouseEnter={() => setOpenSub(null)}
-        >
-          Shadow {config.border.shadow ? "✓" : ""}
-        </button>
-        <hr className={styles.separator} />
-        <button
-          className={`${styles.option} ${openSub === "size" ? styles.highlighted : ""}`}
-          onMouseEnter={() => setOpenSub("size")}
-        >
-          Size ›
-        </button>
-        <button
-          className={`${styles.option} ${openSub === "shape" ? styles.highlighted : ""}`}
-          onMouseEnter={() => setOpenSub("shape")}
-        >
-          Shape ›
-        </button>
-        {SIMPLE_SHAPES.has(config.shape) ? (
+    <>
+      <div className={styles.overlay} onMouseDown={() => window.close()} />
+      <div className={styles.wrapper} ref={wrapperRef}>
+        <div className={styles.menu}>
           <button
-            className={`${styles.option} ${openSub === "border" ? styles.highlighted : ""}`}
-            onMouseEnter={() => setOpenSub("border")}
-          >
-            Border ›
-          </button>
-        ) : (
-          <button
-            className={`${styles.option} ${styles.disabled}`}
+            className={`${styles.option} ${config.mirrored ? styles.active : ""}`}
+            onClick={() => update({ mirrored: !config.mirrored })}
             onMouseEnter={() => setOpenSub(null)}
-            title="No borders on special shapes"
           >
-            Border
+            Mirror {config.mirrored ? "✓" : ""}
           </button>
-        )}
-        <button
-          className={`${styles.option} ${openSub === "opacity" ? styles.highlighted : ""}`}
-          onMouseEnter={() => setOpenSub("opacity")}
-        >
-          Opacity ›
-        </button>
-        <hr className={styles.separator} />
-        <div className={styles.hint}>⌘⇧H to toggle</div>
-        <button className={styles.option} onClick={() => window.close()}>
-          Close
-        </button>
-      </div>
-      {openSub && (
-        <div className={styles.subMenuWrapper}>
-          <div className={styles.subMenu} ref={subRef}>
-            {subContent()}
+          <div
+            className={`${styles.sliderOption} ${config.blurAmount > 0 ? styles.active : ""}`}
+            onMouseEnter={() => setOpenSub(null)}
+          >
+            <span className={styles.optionLabel}>Blur {config.blurAmount > 0 && <span className={styles.check}>✓</span>}</span>
+            <div className={styles.sliderReveal}>
+              <input
+                type="range" min={0} max={20} step={1}
+                value={config.blurAmount}
+                className={styles.slider}
+                style={{ "--fill": `${(config.blurAmount / 20) * 100}%` } as React.CSSProperties}
+                onMouseDown={(e) => e.stopPropagation()}
+                onChange={(e) => update({ blurAmount: Number(e.target.value) })}
+              />
+              <span className={styles.sliderValue}>{config.blurAmount > 0 ? `${config.blurAmount}px` : "Off"}</span>
+            </div>
           </div>
+          <div
+            className={`${styles.sliderOption} ${config.border.shadowAmount > 0 ? styles.active : ""}`}
+            onMouseEnter={() => setOpenSub(null)}
+          >
+            <span className={styles.optionLabel}>Shadow {config.border.shadowAmount > 0 && <span className={styles.check}>✓</span>}</span>
+            <div className={styles.sliderReveal}>
+              <input
+                type="range" min={0} max={10} step={1}
+                value={config.border.shadowAmount}
+                className={styles.slider}
+                style={{ "--fill": `${(config.border.shadowAmount / 10) * 100}%` } as React.CSSProperties}
+                onMouseDown={(e) => e.stopPropagation()}
+                onChange={(e) => setBorder({ shadowAmount: Number(e.target.value) })}
+              />
+              <span className={styles.sliderValue}>{config.border.shadowAmount > 0 ? config.border.shadowAmount : "Off"}</span>
+            </div>
+          </div>
+          <hr className={styles.separator} />
+          <button
+            className={`${styles.option} ${openSub === "size" ? styles.highlighted : ""}`}
+            onMouseEnter={() => setOpenSub("size")}
+          >
+            Size ›
+          </button>
+          <button
+            className={`${styles.option} ${openSub === "shape" ? styles.highlighted : ""}`}
+            onMouseEnter={() => setOpenSub("shape")}
+          >
+            Shape ›
+          </button>
+          {SIMPLE_SHAPES.has(config.shape) ? (
+            <button
+              className={`${styles.option} ${openSub === "border" ? styles.highlighted : ""}`}
+              onMouseEnter={() => setOpenSub("border")}
+            >
+              Border ›
+            </button>
+          ) : (
+            <button
+              className={`${styles.option} ${styles.disabled}`}
+              onMouseEnter={() => setOpenSub(null)}
+              title="No borders on special shapes"
+            >
+              Border
+            </button>
+          )}
+          <div
+            className={`${styles.sliderOption} ${config.opacity < 1 ? styles.active : ""}`}
+            onMouseEnter={() => setOpenSub(null)}
+          >
+            <span className={styles.optionLabel}>Opacity {config.opacity < 1 && <span className={styles.check}>✓</span>}</span>
+            <div className={styles.sliderReveal}>
+              <input
+                type="range" min={10} max={100} step={1}
+                value={Math.round(config.opacity * 100)}
+                className={styles.slider}
+                style={{ "--fill": `${Math.round(config.opacity * 100)}%` } as React.CSSProperties}
+                onMouseDown={(e) => e.stopPropagation()}
+                onChange={(e) => update({ opacity: Number(e.target.value) / 100 })}
+              />
+              <span className={styles.sliderValue}>{Math.round(config.opacity * 100)}%</span>
+            </div>
+          </div>
+          <hr className={styles.separator} />
+          <div className={styles.hint}>⌘⇧H to toggle</div>
+          <button className={styles.option} onClick={() => window.close()}>
+            Close
+          </button>
         </div>
-      )}
-    </div>
+        {hasSub && (
+          <div className={styles.subMenuWrapper}>
+            <div className={styles.subMenu} ref={subRef}>
+              {subContent()}
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
