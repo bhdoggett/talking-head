@@ -283,6 +283,9 @@ export function MenuWindow() {
           <button className={styles.option} onClick={() => api.closeMenu()}>
             Close
           </button>
+          <button className={styles.option} onClick={() => api.quit()}>
+            Quit Talking Head
+          </button>
         </div>
         {hasSub && (
           <div className={styles.subMenuWrapper}>

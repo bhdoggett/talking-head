@@ -168,6 +168,11 @@ fn close_menu(app: AppHandle) {
     }
 }
 
+#[tauri::command]
+fn quit_app(app: AppHandle) {
+    app.exit(0);
+}
+
 fn create_main_window(app: &AppHandle) -> tauri::Result<WebviewWindow> {
     let config = current_config(app);
     let size = config.size;
@@ -276,18 +281,26 @@ pub fn run() {
             toggle_menu,
             resize_menu,
             close_menu,
+            quit_app,
         ])
         .setup(|app| {
-            // No Dock icon — tray only, like the Electron build
-            #[cfg(target_os = "macos")]
-            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
-
             let handle = app.handle().clone();
             create_main_window(&handle)?;
             tray::create(&handle)?;
             spawn_click_through_poller(handle);
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running Talking Head");
+        .build(tauri::generate_context!())
+        .expect("error while building Talking Head")
+        .run(|app, event| {
+            // Clicking the Dock icon brings the bubble back if it was hidden with the hotkey
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { .. } = event {
+                if let Some(win) = app.get_webview_window("main") {
+                    let _ = win.show();
+                }
+            }
+            #[cfg(not(target_os = "macos"))]
+            let _ = (app, event);
+        });
 }

@@ -41,6 +41,7 @@ export const api = {
   toggleMenu: () => invoke<void>("toggle_menu"),
   resizeMenu: (width: number, height: number) => invoke<void>("resize_menu", { width, height }),
   closeMenu: () => invoke<void>("close_menu"),
+  quit: () => invoke<void>("quit_app"),
   startDragging: () => getCurrentWindow().startDragging(),
   isMenuWindow: () => getCurrentWindow().label === "menu",
   onConfigChanged: (callback: (config: AppConfig) => void) =>
