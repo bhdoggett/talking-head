@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.1
+
+### Improvements
+- Talking Head now appears in the Dock like a normal app: Control-click the Dock icon to quit, or press ⌘Q
+- Clicking the Dock icon brings the bubble back if you hid it with ⌘⇧H
+- The settings menu now has a "Quit Talking Head" item
+
 ## v0.2.0
 
 ### New Features
