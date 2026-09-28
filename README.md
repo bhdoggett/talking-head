@@ -18,9 +18,9 @@ A lightweight desktop app that shows your webcam in a circular overlay — desig
 
 Grab the latest build from the [Releases page](https://github.com/bhdoggett/talking-head/releases).
 
-- **macOS (Apple Silicon):** `Talking Head_x.x.x_aarch64.dmg`
-- **macOS (Intel):** `Talking Head_x.x.x_x64.dmg`
-- **Windows:** `Talking Head_x.x.x_x64-setup.exe`
+- **macOS (Apple Silicon):** `Talking.Head_x.x.x_aarch64.dmg`
+- **macOS (Intel):** `Talking.Head_x.x.x_x64.dmg`
+- **Windows:** `Talking.Head_x.x.x_x64-setup.exe`
 
 ## Development
 
