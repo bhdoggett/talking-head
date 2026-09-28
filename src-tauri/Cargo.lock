@@ -3085,7 +3085,7 @@ dependencies = [
 
 [[package]]
 name = "talking-head"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "dirs 6.0.0",
  "serde",

@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.2.0
+
+### New Features
+- **Zoom**: Make your head bigger or smaller inside the bubble, independent of bubble size. Use the Zoom slider in the menu, pinch on the trackpad or Option+scroll over the bubble, or pick a preset from the tray menu
+- **Adjustable blur and shadow**: Blur, shadow, and opacity are now sliders that appear inline when you hover the menu row
+
+### Improvements
+- Rebuilt on Tauri instead of Electron: the download is about 4 MB instead of 100+ MB, and the app uses less memory. Your existing settings carry over
+- Dragging now uses the native window drag, so it's smoother
+- The settings menu only blocks clicks where it's visible, so clicking beside it reaches the app underneath and closes the menu
+- The menu button is now three animated dots, and it stays visible on star and other cut-out shapes
+- The settings menu stays on screen near display edges
+
 ## v0.1.1
 
 ### New Features
