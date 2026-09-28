@@ -1,29 +1,17 @@
 import { useRef, useEffect, useState, useCallback } from "react";
+import { api } from "../api";
 
-declare global {
-  interface Window {
-    electronAPI: {
-      setPosition: (x: number, y: number) => Promise<void>;
-      setSize: (size: number) => Promise<void>;
-      setIgnoreMouseEvents: (ignore: boolean) => Promise<void>;
-      setHover: (hovered: boolean) => Promise<void>;
-      setBorderColor: (color: string) => Promise<void>;
-      toggleMenu: () => Promise<void>;
-      resizeMenu: (width: number, height: number) => Promise<void>;
-      updateConfig: (updates: Record<string, unknown>) => Promise<void>;
-      getConfig: () => Promise<{
-        position: { x: number; y: number };
-        size: number;
-        cameraDeviceId: string | null;
-        border: { width: number; color: string; shadowAmount: number };
-        mirrored: boolean;
-        blurAmount: number;
-        opacity: number;
-        shape: string;
-      }>;
-      onConfigChanged: (callback: (config: unknown) => void) => () => void;
-      onSetCamera: (callback: (deviceId: string) => void) => () => void;
-    };
+// Device labels are only populated after camera permission is granted, so report after getUserMedia
+async function reportCameras() {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    await api.setCameras(
+      devices
+        .filter((d) => d.kind === "videoinput")
+        .map((d) => ({ deviceId: d.deviceId, label: d.label || `Camera ${d.deviceId.slice(0, 4)}` })),
+    );
+  } catch (err) {
+    console.error("Camera list error:", err);
   }
 }
 
@@ -59,6 +47,7 @@ export function useCamera(initialDeviceId: string | null) {
       streamRef.current = stream;
       setStreamReady((n) => n + 1);
       setError(null);
+      reportCameras();
     } catch (err) {
       setError("Camera unavailable");
       console.error("Camera error:", err);
@@ -68,7 +57,7 @@ export function useCamera(initialDeviceId: string | null) {
   useEffect(() => {
     startCamera(initialDeviceId);
 
-    const unsubscribe = window.electronAPI.onSetCamera((deviceId) => {
+    const unsubscribe = api.onSetCamera((deviceId) => {
       startCamera(deviceId);
     });
 

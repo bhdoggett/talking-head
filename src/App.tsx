@@ -4,18 +4,8 @@ import { useBlur } from "./hooks/useBlur";
 import { useDrag } from "./hooks/useDrag";
 import { HoverMenu } from "./HoverMenu";
 import styles from "./App.module.css";
-import { SHAPE_CLIPS, SVG_CLIP_DEFS } from "./shapes";
-
-interface AppConfig {
-  position: { x: number; y: number };
-  size: number;
-  cameraDeviceId: string | null;
-  border: { width: number; color: string; shadowAmount: number };
-  mirrored: boolean;
-  blurAmount: number;
-  opacity: number;
-  shape: string;
-}
+import { api, type AppConfig } from "./api";
+import { SHAPE_CLIPS, SVG_CLIP_DEFS, MIN_ZOOM, MAX_ZOOM } from "./shapes";
 
 export function App() {
   const [config, setConfig] = useState<AppConfig | null>(null);
@@ -25,20 +15,18 @@ export function App() {
   );
 
   const isOutline = config?.shape === "outline";
-  const { canvasRef } = useBlur(
+  const { canvasRef, bgCanvasRef } = useBlur(
     streamRef.current,
     isOutline ? Math.max(config?.blurAmount ?? 0, 10) : (config?.blurAmount ?? 0),
     config?.mirrored ?? true,
     isOutline,
+    config?.zoom ?? 1,
   );
   const { onMouseDown } = useDrag();
 
   useEffect(() => {
-    window.electronAPI.getConfig().then(setConfig);
-    const unsubscribe = window.electronAPI.onConfigChanged((c) => {
-      setConfig(c as AppConfig);
-    });
-    return unsubscribe;
+    api.getConfig().then(setConfig);
+    return api.onConfigChanged(setConfig);
   }, []);
 
   const clipPath = config ? SHAPE_CLIPS[config.shape] : undefined;
@@ -77,22 +65,30 @@ export function App() {
 
   const handleMouseEnter = () => {
     setHovered(true);
-    window.electronAPI.setIgnoreMouseEvents(false);
   };
 
   const handleMouseLeave = () => {
     setHovered(false);
-    window.electronAPI.setIgnoreMouseEvents(true);
   };
 
   const handleWheel = useCallback(
     (e: React.WheelEvent) => {
       if (!config) return;
+      // Pinch (trackpad) or ⌥+scroll adjusts zoom instead of bubble size
+      if (e.ctrlKey || e.altKey) {
+        const step = e.ctrlKey ? -e.deltaY * 0.01 : (e.deltaY > 0 ? -0.1 : 0.1);
+        const newZoom = Math.round(Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, config.zoom + step)) * 100) / 100;
+        if (newZoom !== config.zoom) {
+          setConfig((prev) => (prev ? { ...prev, zoom: newZoom } : prev));
+          api.updateConfig({ zoom: newZoom });
+        }
+        return;
+      }
       const delta = e.deltaY > 0 ? -10 : 10;
       const newSize = Math.max(80, Math.min(320, config.size + delta));
       if (newSize !== config.size) {
         setConfig((prev) => (prev ? { ...prev, size: newSize } : prev));
-        window.electronAPI.setSize(newSize);
+        api.setSize(newSize);
       }
     },
     [config],
@@ -133,9 +129,12 @@ export function App() {
                 playsInline
                 muted
                 style={{
-                  transform: config.mirrored ? "scaleX(-1)" : "none",
+                  transform: `scale(${config.mirrored ? -config.zoom : config.zoom}, ${config.zoom})`,
                 }}
               />
+            )}
+            {config.blurAmount > 0 && !isOutline && (
+              <canvas ref={bgCanvasRef} className={styles.canvasOverlay} />
             )}
             {(config.blurAmount > 0 || isOutline) && (
               <canvas ref={canvasRef} className={styles.canvasOverlay} />

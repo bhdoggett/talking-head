@@ -18,9 +18,9 @@ A lightweight desktop app that shows your webcam in a circular overlay — desig
 
 Grab the latest build from the [Releases page](https://github.com/bhdoggett/talking-head/releases).
 
-- **macOS (Apple Silicon):** `Talking Head-x.x.x-arm64.dmg`
-- **macOS (Intel):** `Talking Head-x.x.x-x64.dmg`
-- **Windows:** `Talking Head-x.x.x-setup.exe`
+- **macOS (Apple Silicon):** `Talking Head_x.x.x_aarch64.dmg`
+- **macOS (Intel):** `Talking Head_x.x.x_x64.dmg`
+- **Windows:** `Talking Head_x.x.x_x64-setup.exe`
 
 ## Development
 
@@ -29,11 +29,18 @@ npm install
 npm run dev
 ```
 
+Requires Node 22+ and a Rust toolchain (`rustup`).
+
+## Test
+
+```bash
+cd src-tauri && cargo test
+```
+
 ## Build
 
 ```bash
-npm run dist        # macOS arm64
-npm run dist:all    # macOS + Windows
+npm run build       # bundles for the current platform into src-tauri/target/release/bundle
 ```
 
 Or push a version tag to trigger GitHub Actions builds:
@@ -45,4 +52,4 @@ git push origin v0.1.0
 
 ## Tech Stack
 
-Electron, Vite, React, TypeScript, CSS Modules, MediaPipe Selfie Segmentation
+Tauri 2 (Rust), Vite, React, TypeScript, CSS Modules, MediaPipe Selfie Segmentation

@@ -1,3 +1,4 @@
+import { api } from "./api";
 import styles from "./HoverMenu.module.css";
 
 interface HoverMenuProps {
@@ -10,7 +11,7 @@ export function HoverMenu({ visible }: HoverMenuProps) {
       <button
         className={styles.ellipsis}
         onMouseDown={(e) => e.stopPropagation()}
-        onClick={() => window.electronAPI.toggleMenu()}
+        onClick={() => api.toggleMenu()}
       >
         <span className={styles.dot} />
         <span className={styles.dot} />

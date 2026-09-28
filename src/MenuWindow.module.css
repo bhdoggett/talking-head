@@ -7,6 +7,8 @@
 
 .wrapper {
   display: flex;
+  /* Shrink-wrap so the window can be sized to the visible menus only */
+  width: max-content;
   gap: 0;
   align-items: flex-start;
   position: relative;

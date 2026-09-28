@@ -1,15 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import styles from "./MenuWindow.module.css";
-import { SHAPE_LABELS, SHAPE_LIST, SIMPLE_SHAPES } from "./shapes";
+import { api, type AppConfig } from "./api";
+import { SHAPE_LABELS, SHAPE_LIST, SIMPLE_SHAPES, MIN_ZOOM, MAX_ZOOM } from "./shapes";
 
-interface AppConfig {
-  blurAmount: number;
-  mirrored: boolean;
-  size: number;
-  border: { width: number; color: string; shadowAmount: number };
-  opacity: number;
-  shape: string;
-}
 
 const SIZE_PRESETS = [
   { label: "Small", value: 200 },
@@ -48,24 +41,23 @@ export function MenuWindow() {
   useEffect(() => {
     const el = wrapperRef.current;
     if (!el) return;
+    // Match the window to the visible menus so empty space doesn't swallow clicks
     const obs = new ResizeObserver(() => {
-      window.electronAPI.resizeMenu(400, el.offsetHeight);
+      api.resizeMenu(el.offsetWidth, el.offsetHeight);
     });
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
 
   useEffect(() => {
-    window.electronAPI.getConfig().then((c) => setConfig(c as AppConfig));
-    const unsubscribe = window.electronAPI.onConfigChanged((c) => {
-      setConfig(c as AppConfig);
-    });
+    api.getConfig().then(setConfig);
+    const unsubscribe = api.onConfigChanged(setConfig);
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") window.close();
+      if (e.key === "Escape") api.closeMenu();
     };
     const handleMouseDown = (e: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        window.close();
+        api.closeMenu();
       }
     };
     window.addEventListener("keydown", handleKey);
@@ -80,8 +72,8 @@ export function MenuWindow() {
 
   if (!config) return null;
 
-  const update = (updates: Record<string, unknown>) => {
-    window.electronAPI.updateConfig(updates);
+  const update = (updates: Partial<AppConfig>) => {
+    api.updateConfig(updates);
   };
 
   const setBorder = (updates: Partial<typeof config.border>) => {
@@ -99,7 +91,7 @@ export function MenuWindow() {
           <button
             key={p.value}
             className={`${styles.option} ${config.size === p.value ? styles.active : ""}`}
-            onClick={() => window.electronAPI.setSize(p.value)}
+            onClick={() => api.setSize(p.value)}
           >
             {p.label} {config.size === p.value ? "✓" : ""}
           </button>
@@ -179,7 +171,7 @@ export function MenuWindow() {
 
   return (
     <>
-      <div className={styles.overlay} onMouseDown={() => window.close()} />
+      <div className={styles.overlay} onMouseDown={() => api.closeMenu()} />
       <div className={styles.wrapper} ref={wrapperRef}>
         <div className={styles.menu}>
           <button
@@ -230,6 +222,23 @@ export function MenuWindow() {
           >
             Size ›
           </button>
+          <div
+            className={`${styles.sliderOption} ${config.zoom > MIN_ZOOM ? styles.active : ""}`}
+            onMouseEnter={() => setOpenSub(null)}
+          >
+            <span className={styles.optionLabel}>Zoom {config.zoom > MIN_ZOOM && <span className={styles.check}>✓</span>}</span>
+            <div className={styles.sliderReveal}>
+              <input
+                type="range" min={MIN_ZOOM} max={MAX_ZOOM} step={0.05}
+                value={config.zoom}
+                className={styles.slider}
+                style={{ "--fill": `${((config.zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM)) * 100}%` } as React.CSSProperties}
+                onMouseDown={(e) => e.stopPropagation()}
+                onChange={(e) => update({ zoom: Number(e.target.value) })}
+              />
+              <span className={styles.sliderValue}>{config.zoom.toFixed(1)}×</span>
+            </div>
+          </div>
           <button
             className={`${styles.option} ${openSub === "shape" ? styles.highlighted : ""}`}
             onMouseEnter={() => setOpenSub("shape")}
@@ -271,7 +280,7 @@ export function MenuWindow() {
           </div>
           <hr className={styles.separator} />
           <div className={styles.hint}>⌘⇧H to toggle</div>
-          <button className={styles.option} onClick={() => window.close()}>
+          <button className={styles.option} onClick={() => api.closeMenu()}>
             Close
           </button>
         </div>
