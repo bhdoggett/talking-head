@@ -2,9 +2,6 @@
 .superpowers/
 node_modules/
 dist/
-dist-electron/
-out/
-release/
 *.log
 docs/
 src-tauri/target/
